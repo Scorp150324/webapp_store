@@ -1,0 +1,4 @@
+flask==3.0.2
+pymysql==1.1.0
+sqlalchemy==2.0.27
+python-dotenv==1.0.1
