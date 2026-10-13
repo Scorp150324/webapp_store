@@ -9,8 +9,8 @@
         <p>Đăng nhập để tiếp tục sử dụng tài khoản của bạn.</p>
     </div>
     <form class="auth-form" method="post" action="{{ url_for('login') }}">
-        <label for="username">Tên đăng nhập hoặc email</label>
-        <input id="username" name="username" type="text" value="{{ username }}"
+        <label for="identity">Email hoặc số điện thoại</label>
+        <input id="identity" name="identity" type="text" value="{{ identity }}"
                autocomplete="username" maxlength="100" required>
 
         <label for="password">Mật khẩu</label>

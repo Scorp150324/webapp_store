@@ -8,6 +8,22 @@ CHARACTER SET utf8mb4
 COLLATE utf8mb4_unicode_ci;
 
 USE store_management_db;
+
+-- NANG CAP CSDL DA TON TAI (chay moi lenh mot lan trong MySQL Workbench/phpMyAdmin):
+-- ALTER TABLE Customers
+--   ADD COLUMN PasswordHash VARCHAR(255) NULL
+--   COMMENT 'Mat khau khach hang da duoc bam bang bcrypt'
+--   AFTER Email;
+-- ALTER TABLE Customers ADD UNIQUE KEY uq_customers_email (Email);
+-- Dat lai mat khau cac tai khoan mau (123456) neu da import du lieu mau truoc do:
+-- UPDATE Users SET PasswordHash = '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO'
+--   WHERE Username IN ('admin_super', 'manager_hung', 'sales_linh', 'sales_tuan',
+--     'kho_dung', 'kho_hoa', 'cashier_trang', 'cashier_minh', 'sales_mai', 'kho_nam');
+-- UPDATE Customers SET PasswordHash = '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO'
+--   WHERE CustomerID BETWEEN 1 AND 10 AND PasswordHash IS NULL;
+-- Khong chay lai toan bo file nay de nang cap CSDL cu: cac lenh DROP TABLE ben duoi
+-- se xoa cac bang va du lieu hien co truoc khi tao lai schema.
+
 -- ============================================================
 -- STORE MANAGEMENT SYSTEM SCHEMA & SAMPLE DATA
 -- Target Database: MySQL 8.0+
@@ -109,7 +125,8 @@ CREATE TABLE Customers (
   GroupID INT,
   FullName VARCHAR(100) NOT NULL,
   Phone VARCHAR(20) NOT NULL UNIQUE,
-  Email VARCHAR(100),
+  Email VARCHAR(100) UNIQUE,
+  PasswordHash VARCHAR(255) COMMENT 'Mật khẩu khách hàng đã được băm bằng bcrypt',
   TotalSpent DECIMAL(15,2) DEFAULT 0.00,
   RewardPoints INT DEFAULT 0,
   IsDeleted TINYINT DEFAULT 0 COMMENT '0: Đang hoạt động, 1: Đã xóa',
@@ -339,16 +356,16 @@ INSERT INTO Role_Permissions (RoleID, PermissionID) VALUES
 
 -- 4. Users (10 records)
 INSERT INTO Users (UserID, RoleID, Username, PasswordHash, FullName, Email, Phone) VALUES
-(1, 1, 'admin_super', '$2a$12$eImiTXuWVxfM37uY4JANjOQx5T6/X/zO1qD8H6W71N0Zg0K6y2k8i', 'Nguyễn Văn Quản Trị', 'admin@store.com', '0901000001'),
-(2, 5, 'manager_hung', '$2a$12$eImiTXuWVxfM37uY4JANjOQx5T6/X/zO1qD8H6W71N0Zg0K6y2k8i', 'Trần Văn Hùng', 'hung.tv@store.com', '0901000002'),
-(3, 2, 'sales_linh', '$2a$12$eImiTXuWVxfM37uY4JANjOQx5T6/X/zO1qD8H6W71N0Zg0K6y2k8i', 'Lê Thị Mỹ Linh', 'linh.ltm@store.com', '0901000003'),
-(4, 2, 'sales_tuan', '$2a$12$eImiTXuWVxfM37uY4JANjOQx5T6/X/zO1qD8H6W71N0Zg0K6y2k8i', 'Phạm Anh Tuấn', 'tuan.pa@store.com', '0901000004'),
-(5, 3, 'kho_dung', '$2a$12$eImiTXuWVxfM37uY4JANjOQx5T6/X/zO1qD8H6W71N0Zg0K6y2k8i', 'Hoàng Tấn Dũng', 'dung.ht@store.com', '0901000005'),
-(6, 3, 'kho_hoa', '$2a$12$eImiTXuWVxfM37uY4JANjOQx5T6/X/zO1qD8H6W71N0Zg0K6y2k8i', 'Vũ Thị Hoa', 'hoa.vt@store.com', '0901000006'),
-(7, 4, 'cashier_trang', '$2a$12$eImiTXuWVxfM37uY4JANjOQx5T6/X/zO1qD8H6W71N0Zg0K6y2k8i', 'Đặng Thu Trang', 'trang.dt@store.com', '0901000007'),
-(8, 4, 'cashier_minh', '$2a$12$eImiTXuWVxfM37uY4JANjOQx5T6/X/zO1qD8H6W71N0Zg0K6y2k8i', 'Ngô Quang Minh', 'minh.nq@store.com', '0901000008'),
-(9, 2, 'sales_mai', '$2a$12$eImiTXuWVxfM37uY4JANjOQx5T6/X/zO1qD8H6W71N0Zg0K6y2k8i', 'Nguyễn Tuyết Mai', 'mai.nt@store.com', '0901000009'),
-(10, 3, 'kho_nam', '$2a$12$eImiTXuWVxfM37uY4JANjOQx5T6/X/zO1qD8H6W71N0Zg0K6y2k8i', 'Bùi Hải Nam', 'nam.bh@store.com', '0901000010');
+(1, 1, 'admin_super', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 'Nguyễn Văn Quản Trị', 'admin@store.com', '0901000001'),
+(2, 5, 'manager_hung', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 'Trần Văn Hùng', 'hung.tv@store.com', '0901000002'),
+(3, 2, 'sales_linh', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 'Lê Thị Mỹ Linh', 'linh.ltm@store.com', '0901000003'),
+(4, 2, 'sales_tuan', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 'Phạm Anh Tuấn', 'tuan.pa@store.com', '0901000004'),
+(5, 3, 'kho_dung', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 'Hoàng Tấn Dũng', 'dung.ht@store.com', '0901000005'),
+(6, 3, 'kho_hoa', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 'Vũ Thị Hoa', 'hoa.vt@store.com', '0901000006'),
+(7, 4, 'cashier_trang', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 'Đặng Thu Trang', 'trang.dt@store.com', '0901000007'),
+(8, 4, 'cashier_minh', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 'Ngô Quang Minh', 'minh.nq@store.com', '0901000008'),
+(9, 2, 'sales_mai', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 'Nguyễn Tuyết Mai', 'mai.nt@store.com', '0901000009'),
+(10, 3, 'kho_nam', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 'Bùi Hải Nam', 'nam.bh@store.com', '0901000010');
 
 -- 5. User_Logs (10 records)
 INSERT INTO User_Logs (LogID, UserID, Action, Module, IPAddress, UserAgent, Description, CreatedAt) VALUES
@@ -371,17 +388,17 @@ INSERT INTO Customer_Groups (GroupID, GroupName, DiscountPercent, MinSpent) VALU
 (4, 'Kim Cương', 10.00, 100000000.00);
 
 -- 7. Customers (10 records)
-INSERT INTO Customers (CustomerID, GroupID, FullName, Phone, Email, TotalSpent, RewardPoints) VALUES
-(1, 4, 'Phạm Quốc Bảo', '0988111222', 'bao.pq@gmail.com', 125000000.00, 1250),
-(2, 3, 'Trần Thu Hà', '0988222333', 'ha.tt@gmail.com', 42000000.00, 420),
-(3, 2, 'Nguyễn Tiến Dũng', '0988333444', 'dung.nt@gmail.com', 18500000.00, 185),
-(4, 1, 'Đỗ Thị Huệ', '0988444555', 'hue.dt@gmail.com', 5200000.00, 52),
-(5, 3, 'Lê Hoàng Nam', '0988555666', 'nam.lh@gmail.com', 35000000.00, 350),
-(6, 2, 'Ngô Thanh Vân', '0988666777', 'van.nt@gmail.com', 12000000.00, 120),
-(7, 1, 'Hoàng Minh Trí', '0988777888', 'tri.hm@gmail.com', 3200000.00, 32),
-(8, 4, 'Vũ Đình Phong', '0988888999', 'phong.vd@gmail.com', 110000000.00, 1100),
-(9, 1, 'Bùi Phương Thảo', '0988999000', 'thao.bp@gmail.com', 0.00, 0),
-(10, 2, 'Đinh Văn Khoa', '0988000111', 'khoa.dv@gmail.com', 15000000.00, 150);
+INSERT INTO Customers (CustomerID, GroupID, FullName, Phone, Email, PasswordHash, TotalSpent, RewardPoints) VALUES
+(1, 4, 'Phạm Quốc Bảo', '0988111222', 'bao.pq@gmail.com', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 125000000.00, 1250),
+(2, 3, 'Trần Thu Hà', '0988222333', 'ha.tt@gmail.com', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 42000000.00, 420),
+(3, 2, 'Nguyễn Tiến Dũng', '0988333444', 'dung.nt@gmail.com', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 18500000.00, 185),
+(4, 1, 'Đỗ Thị Huệ', '0988444555', 'hue.dt@gmail.com', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 5200000.00, 52),
+(5, 3, 'Lê Hoàng Nam', '0988555666', 'nam.lh@gmail.com', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 35000000.00, 350),
+(6, 2, 'Ngô Thanh Vân', '0988666777', 'van.nt@gmail.com', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 12000000.00, 120),
+(7, 1, 'Hoàng Minh Trí', '0988777888', 'tri.hm@gmail.com', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 3200000.00, 32),
+(8, 4, 'Vũ Đình Phong', '0988888999', 'phong.vd@gmail.com', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 110000000.00, 1100),
+(9, 1, 'Bùi Phương Thảo', '0988999000', 'thao.bp@gmail.com', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 0.00, 0),
+(10, 2, 'Đinh Văn Khoa', '0988000111', 'khoa.dv@gmail.com', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 15000000.00, 150);
 
 -- 8. Customer_Addresses (10 records)
 INSERT INTO Customer_Addresses (AddressID, CustomerID, ReceiverName, ReceiverPhone, AddressDetail, ProvinceCity, IsDefault) VALUES
