@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+{% block content %}
+<section class="auth-card">
+    <div class="auth-heading">
+        <p class="auth-eyebrow">PHÚC THỊNH ICT</p>
+        <h2>Tạo tài khoản</h2>
+        <p>Điền thông tin bên dưới để đăng ký tài khoản mới.</p>
+    </div>
+    <form class="auth-form" method="post" action="{{ url_for('register') }}">
+        <label for="full_name">Họ và tên</label>
+        <input id="full_name" name="full_name" type="text"
+               autocomplete="name" maxlength="100" required>
+
+        <label for="username">Tên đăng nhập</label>
+        <input id="username" name="username" type="text"
+               autocomplete="username" maxlength="50" required>
+
+        <label for="email">Email <span>(không bắt buộc)</span></label>
+        <input id="email" name="email" type="email" autocomplete="email" maxlength="100">
+
+        <label for="phone">Số điện thoại <span>(không bắt buộc)</span></label>
+        <input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="20">
+
+        <label for="password">Mật khẩu</label>
+        <input id="password" name="password" type="password"
+               autocomplete="new-password" minlength="8" maxlength="72" required>
+        <small>Mật khẩu tối thiểu 8 ký tự.</small>
+
+        <label for="confirm_password">Nhập lại mật khẩu</label>
+        <input id="confirm_password" name="confirm_password" type="password"
+               autocomplete="new-password" minlength="8" maxlength="72" required>
+
+        <button class="auth-submit" type="submit">Đăng ký</button>
+    </form>
+    <p class="auth-switch">Đã có tài khoản? <a href="{{ url_for('login') }}">Đăng nhập</a></p>
+</section>
+{% endblock %}
