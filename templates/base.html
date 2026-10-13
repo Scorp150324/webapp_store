@@ -6,12 +6,13 @@
     <title>Phúc Thịnh ICT</title>
     <!-- Nhúng file output.css từ Tailwind v4 -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
     {% block styles %}{% endblock %}
 </head>
 <body class="bg-gray-50 text-gray-900 font-sans">
     <header class="bg-blue-600 text-white shadow-md p-4">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">Store Management System</h1>
+            <h1 class="text-xl font-bold">Thiết bị công nghệ</h1>
             <nav class="auth-nav">
                 {% if session.get("user_id") %}
                 <span>Xin chào, {{ session.get("full_name") }}</span>
@@ -19,8 +20,8 @@
                     <button type="submit">Đăng xuất</button>
                 </form>
                 {% else %}
-                <a href="{{ url_for('login') }}">Đăng nhập</a>
-                <a href="{{ url_for('register') }}">Đăng ký</a>
+                <a class="auth-nav-link" href="{{ url_for('login') }}">Đăng nhập</a>
+                <a class="auth-nav-link auth-nav-link-primary" href="{{ url_for('register') }}">Đăng ký</a>
                 {% endif %}
             </nav>
         </div>

@@ -1,9 +1,8 @@
 {% extends "base.html" %}
-{% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
-{% endblock %}
 {% block content %}
 <section class="auth-card">
+    <a class="auth-back" href="{{ url_for('index') }}"
+       aria-label="Quay về trang chủ" title="Quay về trang chủ">←</a>
     <div class="auth-heading">
         <p class="auth-eyebrow">PHÚC THỊNH ICT</p>
         <h2>Tạo tài khoản</h2>

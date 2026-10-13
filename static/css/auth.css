@@ -1,7 +1,7 @@
 .auth-nav {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.65rem;
     font-size: 0.9rem;
 }
 
@@ -11,7 +11,37 @@
     text-decoration: none;
 }
 
-.auth-nav a:hover,
+.auth-nav .auth-nav-link {
+    display: inline-flex;
+    min-height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 0.55rem 1rem;
+    border: 1px solid rgb(255 255 255 / 65%);
+    border-radius: 0.65rem;
+    font-weight: 600;
+    transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.auth-nav .auth-nav-link:hover {
+    transform: translateY(-1px);
+    background: rgb(255 255 255 / 14%);
+    text-decoration: none;
+}
+
+.auth-nav .auth-nav-link-primary {
+    border-color: #fff;
+    background: #fff;
+    color: #1d4ed8;
+    box-shadow: 0 2px 6px rgb(15 23 42 / 12%);
+}
+
+.auth-nav .auth-nav-link-primary:hover {
+    background: #eff6ff;
+    color: #1e40af;
+}
+
 .auth-nav button:hover {
     text-decoration: underline;
 }
@@ -171,5 +201,11 @@
 
     .auth-nav {
         gap: 0.65rem;
+    }
+
+    .auth-nav .auth-nav-link {
+        min-height: 2.25rem;
+        padding: 0.45rem 0.7rem;
+        font-size: 0.82rem;
     }
 }
