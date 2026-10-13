@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="dashboard">
+    <aside class="dashboard-sidebar">
+        <div class="dashboard-brand">
+            <span class="dashboard-brand-mark">PT</span>
+            <div><strong>Quản trị</strong><small>PHÚC THỊNH ICT</small></div>
+        </div>
+        <nav class="dashboard-menu" aria-label="Điều hướng quản lý">
+            <a href="#overview">Tổng quan</a>
+            <a href="#analytics-section">Thống kê</a>
+            <a href="#employees-section">Nhân viên</a>
+            <a href="#customers-section">Khách hàng</a>
+            <a href="#products-section">Sản phẩm</a>
+            <a href="#inventory-section">Nhập / xuất kho</a>
+            <a href="#logs-section">Lịch sử đăng nhập</a>
+        </nav>
+        <a class="dashboard-store-link" href="{{ url_for('index') }}">← Về cửa hàng</a>
+    </aside>
+
+    <div class="dashboard-main">
+        <div class="dashboard-title" id="overview">
+            <div>
+                <p class="dashboard-eyebrow">TRUNG TÂM ĐIỀU HÀNH</p>
+                <h2>Dashboard quản lý</h2>
+                <p>Xin chào {{ session.get("full_name") }}, đây là tình hình cửa hàng.</p>
+            </div>
+            <span class="dashboard-role">{{ "Quản trị viên" if session.get("role_id") == 1 else "Quản lý" }}</span>
+        </div>
+
+        <section class="dashboard-stats" aria-label="Thống kê nhanh">
+            <article class="stat-card"><span>Nhân viên hoạt động</span><strong>{{ stats.employee_count }}</strong><small>Tài khoản chưa khóa</small></article>
+            <article class="stat-card"><span>Khách hàng</span><strong>{{ stats.customer_count }}</strong><small>Khách hàng hoạt động</small></article>
+            <article class="stat-card"><span>Sản phẩm</span><strong>{{ stats.product_count }}</strong><small>{{ stats.stock_count }} sản phẩm trong kho</small></article>
+            <article class="stat-card"><span>Doanh thu ghi nhận</span><strong>{{ "{:,.0f}".format(stats.sales_total or 0) }} ₫</strong><small>{{ stats.orders_today }} đơn hôm nay</small></article>
+        </section>
+
+        <section class="dashboard-panel" id="analytics-section">
+            <div class="panel-heading">
+                <div><p class="dashboard-eyebrow">BÁO CÁO DOANH THU</p><h3>Thống kê theo thời gian</h3></div>
+                <span>{{ period_label }}</span>
+            </div>
+            <form class="analytics-filters" method="get" action="{{ url_for('dashboard.home') }}">
+                <label>Khoảng thống kê
+                    <select name="period">
+                        <option value="day" {% if period == "day" %}selected{% endif %}>Theo ngày</option>
+                        <option value="month" {% if period == "month" %}selected{% endif %}>Theo tháng</option>
+                        <option value="year" {% if period == "year" %}selected{% endif %}>Theo năm</option>
+                    </select>
+                </label>
+                <label>Ngày tham chiếu
+                    <input type="date" name="date" value="{{ selected_date }}" required>
+                </label>
+                <button type="submit">Xem thống kê</button>
+            </form>
+            <div class="analytics-summary">
+                <article><span>Doanh thu trong kỳ</span><strong>{{ "{:,.0f}".format(period_sales) }} ₫</strong></article>
+                <article><span>Đơn hàng hợp lệ</span><strong>{{ period_order_count }}</strong></article>
+                <small>Chỉ tính đơn PAID, COMPLETED và SHIPPED.</small>
+            </div>
+            <div class="analytics-charts">
+                <article class="chart-card">
+                    <h4>Biến động doanh thu</h4>
+                    <p>{% if period == "day" %}Theo giờ{% elif period == "month" %}Theo ngày trong tháng{% else %}Theo tháng trong năm{% endif %}</p>
+                    <div class="line-chart-wrap">
+                        <svg id="revenue-line-chart" class="revenue-line-chart" role="img" aria-label="Biểu đồ đường doanh thu"></svg>
+                    </div>
+                </article>
+                <article class="chart-card">
+                    <h4>Tỷ trọng doanh số theo danh mục</h4>
+                    <p>Giá trị sản phẩm trên các đơn hợp lệ trong kỳ</p>
+                    <div class="pie-chart-layout">
+                        <svg id="category-pie-chart" class="category-pie-chart" role="img" aria-label="Biểu đồ tròn doanh số theo danh mục"></svg>
+                        <ul id="category-chart-legend" class="chart-legend"></ul>
+                    </div>
+                </article>
+            </div>
+            <script type="application/json" id="revenue-chart-data">{{ sales_chart|tojson }}</script>
+            <script type="application/json" id="category-chart-data">{{ category_chart|tojson }}</script>
+        </section>
+
+        <section class="dashboard-panel" id="employees-section">
+            <div class="panel-heading"><div><p class="dashboard-eyebrow">TÀI KHOẢN NỘI BỘ</p><h3>Quản lý nhân viên</h3></div><span>{{ employees|length }} tài khoản</span></div>
+            {% if session.get("role_id") == 1 %}
+            <details class="dashboard-create">
+                <summary>+ Tạo tài khoản nhân viên</summary>
+                <form class="dashboard-form dashboard-form-grid" method="post" action="{{ url_for('dashboard.action', action='employee-create') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label>Họ tên<input name="full_name" maxlength="100" required></label>
+                    <label>Tên đăng nhập<input name="username" maxlength="50" required></label>
+                    <label>Email<input type="email" name="email" maxlength="100"></label>
+                    <label>Số điện thoại<input name="phone" maxlength="20"></label>
+                    <label>Vai trò<select name="role_id" required>{% for role in roles %}<option value="{{ role.RoleID }}">{{ role.RoleName }}</option>{% endfor %}</select></label>
+                    <label>Mật khẩu tạm<input type="password" name="password" minlength="8" maxlength="72" required></label>
+                    <button type="submit">Tạo nhân viên</button>
+                </form>
+            </details>
+            {% endif %}
+            <div class="dashboard-table-wrap">
+                <table class="dashboard-table">
+                    <thead><tr><th>Nhân viên</th><th>Tài khoản</th><th>Vai trò</th><th>Liên hệ</th>{% if session.get("role_id") == 1 %}<th>Thao tác</th>{% endif %}</tr></thead>
+                    <tbody>{% for employee in employees %}
+                    <tr>
+                        <td>{{ employee.FullName }}</td><td>{{ employee.Username }}</td><td><span class="role-pill">{{ employee.RoleName or "Chưa phân quyền" }}</span></td>
+                        <td>{{ employee.Email or "—" }}<small class="cell-sub">{{ employee.Phone or "" }}</small></td>
+                        {% if session.get("role_id") == 1 %}
+                        <td class="table-actions">
+                            <details><summary>Sửa</summary>
+                                <form class="inline-edit-form" method="post" action="{{ url_for('dashboard.action', action='employee-update') }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ employee.UserID }}">
+                                    <label>Họ tên<input name="full_name" value="{{ employee.FullName }}" maxlength="100" required></label>
+                                    <label>Email<input type="email" name="email" value="{{ employee.Email or '' }}" maxlength="100"></label>
+                                    <label>Điện thoại<input name="phone" value="{{ employee.Phone or '' }}" maxlength="20"></label>
+                                    <label>Vai trò<select name="role_id">{% for role in roles %}<option value="{{ role.RoleID }}" {% if role.RoleID == employee.RoleID %}selected{% endif %}>{{ role.RoleName }}</option>{% endfor %}</select></label>
+                                    <label>Mật khẩu mới<input type="password" name="password" minlength="8" maxlength="72" placeholder="Để trống nếu không đổi"></label>
+                                    <button type="submit">Lưu thay đổi</button>
+                                </form>
+                            </details>
+                            {% if employee.UserID != session.get("user_id") %}
+                            <form method="post" action="{{ url_for('dashboard.action', action='employee-delete') }}" onsubmit="return confirm('Khóa tài khoản nhân viên này?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ employee.UserID }}"><button class="text-action danger-action" type="submit">Khóa</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                    </tr>{% else %}<tr><td colspan="5" class="table-empty">Chưa có nhân viên.</td></tr>{% endfor %}</tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="dashboard-panel" id="customers-section">
+            <div class="panel-heading"><div><p class="dashboard-eyebrow">CRM</p><h3>Quản lý khách hàng</h3></div><span>{{ customers|length }} khách hàng</span></div>
+            <details class="dashboard-create">
+                <summary>+ Thêm khách hàng</summary>
+                <form class="dashboard-form dashboard-form-grid" method="post" action="{{ url_for('dashboard.action', action='customer-create') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label>Họ tên<input name="full_name" maxlength="100" required></label><label>Điện thoại<input name="phone" maxlength="20" required></label>
+                    <label>Email<input type="email" name="email" maxlength="100"></label><label>Mật khẩu tạm<input type="password" name="password" minlength="8" maxlength="72" required></label>
+                    <button type="submit">Thêm khách hàng</button>
+                </form>
+            </details>
+            <div class="dashboard-table-wrap"><table class="dashboard-table">
+                <thead><tr><th>Khách hàng</th><th>Liên hệ</th><th>Tổng chi tiêu</th><th>Điểm</th><th>Thao tác</th></tr></thead>
+                <tbody>{% for customer in customers %}<tr>
+                    <td>{{ customer.FullName }}</td><td>{{ customer.Phone }}<small class="cell-sub">{{ customer.Email or "" }}</small></td>
+                    <td>{{ "{:,.0f}".format(customer.TotalSpent or 0) }} ₫</td><td>{{ customer.RewardPoints or 0 }}</td>
+                    <td class="table-actions"><details><summary>Sửa</summary><form class="inline-edit-form" method="post" action="{{ url_for('dashboard.action', action='customer-update') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ customer.CustomerID }}">
+                        <label>Họ tên<input name="full_name" value="{{ customer.FullName }}" maxlength="100" required></label><label>Điện thoại<input name="phone" value="{{ customer.Phone }}" maxlength="20" required></label>
+                        <label>Email<input type="email" name="email" value="{{ customer.Email or '' }}" maxlength="100"></label><label>Mật khẩu mới<input type="password" name="password" minlength="8" maxlength="72" placeholder="Để trống nếu không đổi"></label>
+                        <button type="submit">Lưu thay đổi</button>
+                    </form></details>
+                    <form method="post" action="{{ url_for('dashboard.action', action='customer-delete') }}" onsubmit="return confirm('Ẩn khách hàng này?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ customer.CustomerID }}"><button class="text-action danger-action" type="submit">Ẩn</button></form></td>
+                </tr>{% else %}<tr><td colspan="5" class="table-empty">Chưa có khách hàng.</td></tr>{% endfor %}</tbody>
+            </table></div>
+        </section>
+
+        <section class="dashboard-panel" id="products-section">
+            <div class="panel-heading"><div><p class="dashboard-eyebrow">DANH MỤC CỬA HÀNG</p><h3>Quản lý sản phẩm</h3></div><span>{{ products|length }} sản phẩm</span></div>
+            <details class="dashboard-create">
+                <summary>+ Thêm sản phẩm</summary>
+                <form class="dashboard-form dashboard-form-grid" method="post" action="{{ url_for('dashboard.action', action='product-create') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label>Tên sản phẩm<input name="product_name" maxlength="200" required></label><label>SKU<input name="sku" maxlength="50" required></label>
+                    <label>Mã vạch<input name="barcode" maxlength="50"></label><label>Danh mục<select name="category_id"><option value="">Không chọn</option>{% for category in categories %}<option value="{{ category.CategoryID }}">{{ category.CategoryName }}</option>{% endfor %}</select></label>
+                    <label>Nhà cung cấp<select name="supplier_id"><option value="">Không chọn</option>{% for supplier in suppliers %}<option value="{{ supplier.SupplierID }}">{{ supplier.SupplierName }}</option>{% endfor %}</select></label>
+                    <label>Giá nhập<input type="number" name="cost_price" min="0" step="0.01" required></label><label>Giá bán<input type="number" name="selling_price" min="0" step="0.01" required></label>
+                    <label>Bảo hành (tháng)<input type="number" name="warranty_months" min="0" value="12" required></label><label>URL ảnh<input type="url" name="main_image" maxlength="500"></label>
+                    <label class="wide-field">Thông số<textarea name="specifications" rows="2"></textarea></label>
+                    <label class="check-field"><input type="checkbox" name="is_has_serial" value="1" checked> Quản lý serial</label><button type="submit">Tạo sản phẩm</button>
+                </form>
+            </details>
+            <div class="dashboard-table-wrap"><table class="dashboard-table">
+                <thead><tr><th>Sản phẩm</th><th>Danh mục</th><th>SKU</th><th>Tồn kho</th><th>Giá bán</th><th>Thao tác</th></tr></thead>
+                <tbody>{% for product in products %}<tr>
+                    <td>{{ product.ProductName }}<small class="cell-sub">{{ product.SupplierName or "" }}</small></td><td>{{ product.CategoryName or "—" }}</td><td>{{ product.SKU }}</td><td>{{ product.StockQuantity }}</td><td>{{ "{:,.0f}".format(product.SellingPrice) }} ₫</td>
+                    <td class="table-actions"><details><summary>Sửa</summary><form class="inline-edit-form product-edit-form" method="post" action="{{ url_for('dashboard.action', action='product-update') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ product.ProductID }}">
+                        <label>Tên<input name="product_name" value="{{ product.ProductName }}" maxlength="200" required></label><label>SKU<input name="sku" value="{{ product.SKU }}" maxlength="50" required></label>
+                        <label>Mã vạch<input name="barcode" value="{{ product.Barcode or '' }}" maxlength="50"></label><label>Danh mục<select name="category_id"><option value="">Không chọn</option>{% for category in categories %}<option value="{{ category.CategoryID }}" {% if category.CategoryID == product.CategoryID %}selected{% endif %}>{{ category.CategoryName }}</option>{% endfor %}</select></label>
+                        <label>Nhà cung cấp<select name="supplier_id"><option value="">Không chọn</option>{% for supplier in suppliers %}<option value="{{ supplier.SupplierID }}" {% if supplier.SupplierID == product.SupplierID %}selected{% endif %}>{{ supplier.SupplierName }}</option>{% endfor %}</select></label>
+                        <label>Giá nhập<input type="number" name="cost_price" value="{{ product.CostPrice }}" min="0" step="0.01" required></label><label>Giá bán<input type="number" name="selling_price" value="{{ product.SellingPrice }}" min="0" step="0.01" required></label>
+                        <label>Bảo hành<input type="number" name="warranty_months" value="{{ product.WarrantyMonths }}" min="0" required></label><label>URL ảnh<input type="url" name="main_image" value="{{ product.MainImage or '' }}" maxlength="500"></label>
+                        <label class="wide-field">Thông số<textarea name="specifications" rows="2">{{ product.Specifications or '' }}</textarea></label><label class="check-field"><input type="checkbox" name="is_has_serial" value="1" {% if product.IsHasSerial %}checked{% endif %}> Quản lý serial</label><button type="submit">Lưu thay đổi</button>
+                    </form></details>
+                    <form method="post" action="{{ url_for('dashboard.action', action='product-delete') }}" onsubmit="return confirm('Ẩn sản phẩm này?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ product.ProductID }}"><button class="text-action danger-action" type="submit">Ẩn</button></form></td>
+                </tr>{% else %}<tr><td colspan="6" class="table-empty">Chưa có sản phẩm.</td></tr>{% endfor %}</tbody>
+            </table></div>
+        </section>
+
+        <section class="dashboard-panel" id="inventory-section">
+            <div class="panel-heading"><div><p class="dashboard-eyebrow">KIỂM SOÁT TỒN KHO</p><h3>Nhập / xuất hàng</h3></div></div>
+            <div class="inventory-forms">
+                <form class="dashboard-form inventory-form" method="post" action="{{ url_for('dashboard.action', action='inbound-create') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><h4>Nhập hàng</h4>
+                    <label>Sản phẩm<select name="product_id" required>{% for product in products %}<option value="{{ product.ProductID }}">{{ product.ProductName }} (tồn {{ product.StockQuantity }})</option>{% endfor %}</select></label>
+                    <label>Nhà cung cấp<select name="supplier_id"><option value="">Không chọn</option>{% for supplier in suppliers %}<option value="{{ supplier.SupplierID }}">{{ supplier.SupplierName }}</option>{% endfor %}</select></label>
+                    <div class="form-row"><label>Số lượng<input type="number" name="quantity" min="1" required></label><label>Giá nhập/đơn vị<input type="number" name="import_price" min="0" step="0.01" required></label></div>
+                    <label>Serial (mỗi mã một dòng; bắt buộc với sản phẩm quản lý serial)<textarea name="serial_numbers" rows="3"></textarea></label>
+                    <label>Ghi chú<textarea name="notes" rows="2"></textarea></label><button type="submit">Tạo phiếu nhập</button>
+                </form>
+                <form class="dashboard-form inventory-form" method="post" action="{{ url_for('dashboard.action', action='outbound-create') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><h4>Xuất hàng / tạo đơn bán</h4>
+                    <label>Sản phẩm<select name="product_id" required>{% for product in products %}<option value="{{ product.ProductID }}">{{ product.ProductName }} (tồn {{ product.StockQuantity }})</option>{% endfor %}</select></label>
+                    <label>Khách hàng<select name="customer_id"><option value="">Khách lẻ</option>{% for customer in customers %}<option value="{{ customer.CustomerID }}">{{ customer.FullName }} — {{ customer.Phone }}</option>{% endfor %}</select></label>
+                    <div class="form-row"><label>Số lượng<input type="number" name="quantity" min="1" required></label><label>Thanh toán<select name="payment_method" required><option value="CASH">Tiền mặt</option><option value="BANK_TRANSFER">Chuyển khoản</option><option value="CARD">Thẻ</option><option value="MOMO">MoMo</option><option value="VNPAY">VNPay</option></select></label></div>
+                    <label>Ghi chú<textarea name="notes" rows="2"></textarea></label><button type="submit">Tạo đơn xuất hàng</button>
+                </form>
+            </div>
+            <div class="inventory-history">
+                <div><h4>Phiếu nhập gần đây</h4><div class="dashboard-table-wrap"><table class="dashboard-table"><thead><tr><th>Mã phiếu</th><th>Ngày</th><th>Nhà cung cấp</th><th>Tổng tiền</th></tr></thead><tbody>{% for note in inbound_notes %}<tr><td>#{{ note.InboundID }}</td><td>{{ note.ImportDate }}</td><td>{{ note.SupplierName or "—" }}</td><td>{{ "{:,.0f}".format(note.TotalAmount) }} ₫</td></tr>{% else %}<tr><td colspan="4" class="table-empty">Chưa có phiếu nhập.</td></tr>{% endfor %}</tbody></table></div></div>
+                <div><h4>Đơn xuất gần đây</h4><div class="dashboard-table-wrap"><table class="dashboard-table"><thead><tr><th>Mã đơn</th><th>Ngày</th><th>Khách hàng</th><th>Tổng tiền</th></tr></thead><tbody>{% for order in orders %}<tr><td>{{ order.OrderCode }}</td><td>{{ order.OrderDate }}</td><td>{{ order.CustomerName or "Khách lẻ" }}</td><td>{{ "{:,.0f}".format(order.TotalAmount) }} ₫</td></tr>{% else %}<tr><td colspan="4" class="table-empty">Chưa có đơn hàng.</td></tr>{% endfor %}</tbody></table></div></div>
+            </div>
+        </section>
+
+        <section class="dashboard-panel" id="logs-section">
+            <div class="panel-heading"><div><p class="dashboard-eyebrow">HOẠT ĐỘNG TÀI KHOẢN</p><h3>Lịch sử khách hàng đăng nhập</h3></div><span>100 lần gần nhất</span></div>
+            <div class="dashboard-table-wrap"><table class="dashboard-table">
+                <thead><tr><th>Khách hàng</th><th>Thời gian đăng nhập</th><th>Địa chỉ IP</th><th>Trình duyệt / thiết bị</th></tr></thead>
+                <tbody>{% for log in login_logs %}<tr><td>{{ log.FullName }}<small class="cell-sub">{{ log.Phone }}{% if log.Email %} · {{ log.Email }}{% endif %}</small></td><td>{{ log.LoggedAt }}</td><td>{{ log.IPAddress or "—" }}</td><td class="user-agent-cell">{{ log.UserAgent or "—" }}</td></tr>{% else %}<tr><td colspan="4" class="table-empty">Chưa có lượt đăng nhập khách hàng.</td></tr>{% endfor %}</tbody>
+            </table></div>
+        </section>
+    </div>
+</div>
+<script defer src="{{ url_for('static', filename='js/dashboard-charts.js') }}"></script>
+{% endblock %}

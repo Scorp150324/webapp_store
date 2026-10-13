@@ -7,6 +7,7 @@ from flask import Flask, flash, redirect, render_template, request, session, url
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from database import engine
+from dashboard import dashboard_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
@@ -14,21 +15,115 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FLASK_ENV") == "production"
 logger = logging.getLogger(__name__)
+app.register_blueprint(dashboard_bp)
+
+PRODUCT_CATEGORIES = {
+    "pc": {
+        "label": "PC",
+        "root_names": {"máy tính để bàn (pc)"},
+    },
+    "laptop": {
+        "label": "Laptop",
+        "root_names": {"laptop"},
+    },
+    "phone": {
+        "label": "Điện thoại",
+        "root_names": {"điện thoại thông minh"},
+    },
+    "printer": {
+        "label": "Máy in",
+        "root_names": {"máy in & thiết bị văn phòng"},
+    },
+    "camera": {
+        "label": "Camera",
+        "root_names": {"camera & thiết bị an ninh"},
+    },
+    "accessories": {
+        "label": "Phụ kiện khác",
+        "root_names": {"linh kiện máy tính", "phụ kiện & thiết bị ngoại vi"},
+    },
+}
 
 
 @app.route("/")
 def index():
     products = []
+    search = request.args.get("q", "").strip()[:100]
+    selected_category = request.args.get("category", "")
+    if selected_category not in PRODUCT_CATEGORIES:
+        selected_category = ""
+
     try:
         with engine.connect() as connection:
+            category_rows = connection.execute(
+                text("SELECT CategoryID, CategoryName, ParentID FROM Categories")
+            ).mappings().all()
+            child_ids_by_parent = {}
+            for row in category_rows:
+                if row["ParentID"] is not None:
+                    child_ids_by_parent.setdefault(row["ParentID"], set()).add(
+                        row["CategoryID"]
+                    )
+
+            category_ids = set()
+            if selected_category:
+                root_names = PRODUCT_CATEGORIES[selected_category]["root_names"]
+                root_ids = {
+                    row["CategoryID"]
+                    for row in category_rows
+                    if row["ParentID"] is None
+                    and row["CategoryName"].strip().casefold() in root_names
+                }
+                category_ids.update(root_ids)
+                pending_ids = list(root_ids)
+                while pending_ids:
+                    parent_id = pending_ids.pop()
+                    for child_id in child_ids_by_parent.get(parent_id, set()):
+                        if child_id not in category_ids:
+                            category_ids.add(child_id)
+                            pending_ids.append(child_id)
+
+            query = (
+                "SELECT p.ProductName, p.SellingPrice, p.MainImage, "
+                "p.SKU, p.Barcode, c.CategoryName "
+                "FROM Products AS p "
+                "LEFT JOIN Categories AS c ON c.CategoryID = p.CategoryID "
+                "WHERE p.IsDeleted = 0"
+            )
+            parameters = {}
+            if search:
+                query += (
+                    " AND (p.ProductName LIKE :search "
+                    "OR p.SKU LIKE :search "
+                    "OR p.Barcode LIKE :search "
+                    "OR p.Specifications LIKE :search)"
+                )
+                parameters["search"] = f"%{search}%"
+            if selected_category:
+                if category_ids:
+                    category_parameters = []
+                    for index, category_id in enumerate(sorted(category_ids)):
+                        parameter_name = f"category_id_{index}"
+                        category_parameters.append(f":{parameter_name}")
+                        parameters[parameter_name] = category_id
+                    query += f" AND p.CategoryID IN ({', '.join(category_parameters)})"
+                else:
+                    query += " AND 1 = 0"
+
             result = connection.execute(
-                text("SELECT ProductName, SellingPrice, MainImage FROM Products")
+                text(query), parameters
             )
             products = result.fetchall()
     except Exception:
         logger.exception("Không thể tải danh sách sản phẩm")
 
-    return render_template("index.html", products=products)
+    return render_template(
+        "index.html",
+        products=products,
+        search=search,
+        selected_category=selected_category,
+        product_categories=PRODUCT_CATEGORIES,
+    )
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -61,6 +156,19 @@ def login():
                     password.encode("utf-8"),
                     customer["PasswordHash"].encode("utf-8"),
                 ):
+                    with engine.begin() as log_connection:
+                        log_connection.execute(
+                            text(
+                                "INSERT INTO Customer_Login_Logs "
+                                "(CustomerID, IPAddress, UserAgent) "
+                                "VALUES (:customer_id, :ip_address, :user_agent)"
+                            ),
+                            {
+                                "customer_id": customer["CustomerID"],
+                                "ip_address": request.remote_addr,
+                                "user_agent": request.user_agent.string[:255],
+                            },
+                        )
                     session.clear()
                     session["user_id"] = customer["CustomerID"]
                     session["user_type"] = "customer"

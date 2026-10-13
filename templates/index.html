@@ -1,17 +1,66 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="bg-white rounded-lg shadow p-6">
-    <h2 class="text-2xl font-semibold mb-4 text-blue-700">Danh sách sản phẩm nổi bật</h2>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {% for product in products %}
-        <div class="border rounded-lg p-4 shadow-sm hover:shadow-md transition">
-            <img src="{{ product.MainImage }}" alt="{{ product.ProductName }}" class="w-full h-48 object-cover rounded mb-3">
-            <h3 class="font-bold text-lg mb-1">{{ product.ProductName }}</h3>
-            <p class="text-red-600 font-semibold">Giá: {{ "{:,.0f}".format(product.SellingPrice) }} VNĐ</p>
+<section class="catalog">
+    <div class="catalog-heading">
+        <div>
+            <p class="catalog-eyebrow">KHÁM PHÁ SẢN PHẨM</p>
+            <h2>Thiết bị công nghệ</h2>
         </div>
+        <span class="catalog-count">{{ products|length }} sản phẩm</span>
+    </div>
+
+    <form class="catalog-search" method="get" action="{{ url_for('index') }}">
+        <label class="visually-hidden" for="product-search">Tìm sản phẩm</label>
+        <span class="catalog-search-icon" aria-hidden="true">⌕</span>
+        <input id="product-search" name="q" type="search" value="{{ search }}"
+               placeholder="Tìm theo tên sản phẩm, SKU, mã vạch..."
+               maxlength="100">
+        {% if selected_category %}
+        <input type="hidden" name="category" value="{{ selected_category }}">
+        {% endif %}
+        <button type="submit">Tìm kiếm</button>
+    </form>
+
+    <nav class="catalog-filters" aria-label="Lọc sản phẩm theo danh mục">
+        <a class="catalog-filter{% if not selected_category %} is-active{% endif %}"
+           href="{{ url_for('index', q=search or None) }}">Tất cả</a>
+        {% for slug, category in product_categories.items() %}
+        <a class="catalog-filter{% if selected_category == slug %} is-active{% endif %}"
+           href="{{ url_for('index', q=search or None, category=slug) }}">{{ category.label }}</a>
+        {% endfor %}
+    </nav>
+
+    <div class="catalog-grid">
+        {% for product in products %}
+        <article class="product-card">
+            <div class="product-image-wrap">
+                {% if product.MainImage %}
+                <img src="{{ product.MainImage }}" alt="{{ product.ProductName }}" class="product-image">
+                {% else %}
+                <div class="product-image-placeholder" aria-label="Chưa có ảnh sản phẩm">Ảnh sản phẩm</div>
+                {% endif %}
+                {% if product.CategoryName %}
+                <span class="product-category">{{ product.CategoryName }}</span>
+                {% endif %}
+            </div>
+            <div class="product-details">
+                <h3>{{ product.ProductName }}</h3>
+                <p class="product-price">{{ "{:,.0f}".format(product.SellingPrice) }} <span>VNĐ</span></p>
+                {% if product.SKU %}
+                <p class="product-sku">Mã: {{ product.SKU }}</p>
+                {% endif %}
+            </div>
+        </article>
         {% else %}
-        <p class="text-gray-500">Chưa có sản phẩm nào trong cơ sở dữ liệu hoặc chưa kết nối được CSDL.</p>
+        <div class="catalog-empty">
+            <span aria-hidden="true">⌕</span>
+            <h3>Không tìm thấy sản phẩm</h3>
+            <p>Thử thay đổi từ khóa hoặc chọn một danh mục khác.</p>
+            {% if search or selected_category %}
+            <a href="{{ url_for('index') }}">Xóa bộ lọc</a>
+            {% endif %}
+        </div>
         {% endfor %}
     </div>
-</div>
+</section>
 {% endblock %}

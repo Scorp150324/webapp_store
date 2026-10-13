@@ -21,6 +21,15 @@ USE store_management_db;
 --     'kho_dung', 'kho_hoa', 'cashier_trang', 'cashier_minh', 'sales_mai', 'kho_nam');
 -- UPDATE Customers SET PasswordHash = '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO'
 --   WHERE CustomerID BETWEEN 1 AND 10 AND PasswordHash IS NULL;
+-- CREATE TABLE IF NOT EXISTS Customer_Login_Logs (
+--   LoginLogID BIGINT AUTO_INCREMENT PRIMARY KEY,
+--   CustomerID INT NOT NULL,
+--   LoggedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--   IPAddress VARCHAR(45),
+--   UserAgent VARCHAR(255),
+--   CONSTRAINT fk_customer_login_logs_customer
+--     FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID) ON DELETE CASCADE
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 -- Khong chay lai toan bo file nay de nang cap CSDL cu: cac lenh DROP TABLE ben duoi
 -- se xoa cac bang va du lieu hien co truoc khi tao lai schema.
 
@@ -47,6 +56,7 @@ DROP TABLE IF EXISTS Suppliers;
 DROP TABLE IF EXISTS Categories;
 DROP TABLE IF EXISTS Promotions;
 DROP TABLE IF EXISTS Customer_Addresses;
+DROP TABLE IF EXISTS Customer_Login_Logs;
 DROP TABLE IF EXISTS Customers;
 DROP TABLE IF EXISTS Customer_Groups;
 DROP TABLE IF EXISTS User_Logs;
@@ -134,6 +144,16 @@ CREATE TABLE Customers (
   UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   DeletedAt DATETIME COMMENT 'Ngày xóa mềm',
   CONSTRAINT fk_customers_group FOREIGN KEY (GroupID) REFERENCES Customer_Groups(GroupID) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE Customer_Login_Logs (
+  LoginLogID BIGINT AUTO_INCREMENT PRIMARY KEY,
+  CustomerID INT NOT NULL,
+  LoggedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  IPAddress VARCHAR(45),
+  UserAgent VARCHAR(255),
+  CONSTRAINT fk_customer_login_logs_customer
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE Customer_Addresses (

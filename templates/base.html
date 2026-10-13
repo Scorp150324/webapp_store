@@ -7,6 +7,8 @@
     <!-- Nhúng file output.css từ Tailwind v4 -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/catalog.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     {% block styles %}{% endblock %}
 </head>
 <body class="bg-gray-50 text-gray-900 font-sans">
@@ -16,6 +18,9 @@
             <nav class="auth-nav">
                 {% if session.get("user_id") %}
                 <span>Xin chào, {{ session.get("full_name") }}</span>
+                {% if session.get("user_type") == "staff" and session.get("role_id") in [1, 5] %}
+                <a class="auth-nav-link" href="{{ url_for('dashboard.home') }}">Quản lý</a>
+                {% endif %}
                 <form method="post" action="{{ url_for('logout') }}">
                     <button type="submit">Đăng xuất</button>
                 </form>
