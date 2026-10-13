@@ -18,8 +18,9 @@
         <a class="dashboard-store-link" href="{{ url_for('index') }}">← Về cửa hàng</a>
     </aside>
 
-    <div class="dashboard-main">
-        <div class="dashboard-title" id="overview">
+    <div class="dashboard-main" id="dashboard-content">
+        <section class="dashboard-overview" id="overview" data-dashboard-view="overview">
+        <div class="dashboard-title">
             <div>
                 <p class="dashboard-eyebrow">TRUNG TÂM ĐIỀU HÀNH</p>
                 <h2>Dashboard quản lý</h2>
@@ -34,8 +35,9 @@
             <article class="stat-card"><span>Sản phẩm</span><strong>{{ stats.product_count }}</strong><small>{{ stats.stock_count }} sản phẩm trong kho</small></article>
             <article class="stat-card"><span>Doanh thu ghi nhận</span><strong>{{ "{:,.0f}".format(stats.sales_total or 0) }} ₫</strong><small>{{ stats.orders_today }} đơn hôm nay</small></article>
         </section>
+        </section>
 
-        <section class="dashboard-panel" id="analytics-section">
+        <section class="dashboard-panel" id="analytics-section" data-dashboard-view="analytics">
             <div class="panel-heading">
                 <div><p class="dashboard-eyebrow">BÁO CÁO DOANH THU</p><h3>Thống kê theo thời gian</h3></div>
                 <span>{{ period_label }}</span>
@@ -79,7 +81,7 @@
             <script type="application/json" id="category-chart-data">{{ category_chart|tojson }}</script>
         </section>
 
-        <section class="dashboard-panel" id="employees-section">
+        <section class="dashboard-panel" id="employees-section" data-dashboard-view="employees">
             <div class="panel-heading"><div><p class="dashboard-eyebrow">TÀI KHOẢN NỘI BỘ</p><h3>Quản lý nhân viên</h3></div><span>{{ employees|length }} tài khoản</span></div>
             {% if session.get("role_id") == 1 %}
             <details class="dashboard-create">
@@ -128,7 +130,7 @@
             </div>
         </section>
 
-        <section class="dashboard-panel" id="customers-section">
+        <section class="dashboard-panel" id="customers-section" data-dashboard-view="customers">
             <div class="panel-heading"><div><p class="dashboard-eyebrow">CRM</p><h3>Quản lý khách hàng</h3></div><span>{{ customers|length }} khách hàng</span></div>
             <details class="dashboard-create">
                 <summary>+ Thêm khách hàng</summary>
@@ -155,7 +157,7 @@
             </table></div>
         </section>
 
-        <section class="dashboard-panel" id="products-section">
+        <section class="dashboard-panel" id="products-section" data-dashboard-view="products">
             <div class="panel-heading"><div><p class="dashboard-eyebrow">DANH MỤC CỬA HÀNG</p><h3>Quản lý sản phẩm</h3></div><span>{{ products|length }} sản phẩm</span></div>
             <details class="dashboard-create">
                 <summary>+ Thêm sản phẩm</summary>
@@ -188,7 +190,7 @@
             </table></div>
         </section>
 
-        <section class="dashboard-panel" id="inventory-section">
+        <section class="dashboard-panel" id="inventory-section" data-dashboard-view="inventory">
             <div class="panel-heading"><div><p class="dashboard-eyebrow">KIỂM SOÁT TỒN KHO</p><h3>Nhập / xuất hàng</h3></div></div>
             <div class="inventory-forms">
                 <form class="dashboard-form inventory-form" method="post" action="{{ url_for('dashboard.action', action='inbound-create') }}">
@@ -213,7 +215,7 @@
             </div>
         </section>
 
-        <section class="dashboard-panel" id="logs-section">
+        <section class="dashboard-panel" id="logs-section" data-dashboard-view="logs">
             <div class="panel-heading"><div><p class="dashboard-eyebrow">HOẠT ĐỘNG TÀI KHOẢN</p><h3>Lịch sử khách hàng đăng nhập</h3></div><span>100 lần gần nhất</span></div>
             <div class="dashboard-table-wrap"><table class="dashboard-table">
                 <thead><tr><th>Khách hàng</th><th>Thời gian đăng nhập</th><th>Địa chỉ IP</th><th>Trình duyệt / thiết bị</th></tr></thead>
@@ -223,4 +225,5 @@
     </div>
 </div>
 <script defer src="{{ url_for('static', filename='js/dashboard-charts.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/dashboard-navigation.js') }}"></script>
 {% endblock %}

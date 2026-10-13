@@ -7,7 +7,7 @@ from flask import Flask, flash, redirect, render_template, request, session, url
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from database import engine
-from dashboard import dashboard_bp
+from admin import dashboard_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)

@@ -68,6 +68,12 @@
     color: #1d4ed8;
 }
 
+.dashboard-menu a[aria-current="page"] {
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 700;
+}
+
 .dashboard-store-link {
     border-top: 1px solid #e2e8f0;
     border-radius: 0;
@@ -77,6 +83,16 @@
 .dashboard-main {
     display: grid;
     min-width: 0;
+    align-content: start;
+    gap: 1.25rem;
+}
+
+.dashboard-main [hidden] {
+    display: none !important;
+}
+
+.dashboard-overview {
+    display: grid;
     align-content: start;
     gap: 1.25rem;
 }
