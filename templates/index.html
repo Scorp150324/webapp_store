@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-2xl font-semibold mb-4 text-blue-700">Danh sách sản phẩm nổi bật</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% for product in products %}
+        <div class="border rounded-lg p-4 shadow-sm hover:shadow-md transition">
+            <img src="{{ product.MainImage }}" alt="{{ product.ProductName }}" class="w-full h-48 object-cover rounded mb-3">
+            <h3 class="font-bold text-lg mb-1">{{ product.ProductName }}</h3>
+            <p class="text-red-600 font-semibold">Giá: {{ "{:,.0f}".format(product.SellingPrice) }} VNĐ</p>
+        </div>
+        {% else %}
+        <p class="text-gray-500">Chưa có sản phẩm nào trong cơ sở dữ liệu hoặc chưa kết nối được CSDL.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
