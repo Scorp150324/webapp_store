@@ -46,7 +46,8 @@ def home():
             ).mappings().all()
             customers = connection.execute(
                 text(
-                    "SELECT CustomerID, FullName, Phone, Email, TotalSpent, RewardPoints "
+                    "SELECT CustomerID, Username, FullName, Phone, Email, "
+                    "TotalSpent, RewardPoints "
                     "FROM Customers WHERE IsDeleted = 0 "
                     "ORDER BY CustomerID DESC LIMIT 100"
                 )

@@ -12,6 +12,7 @@ def handle_action(connection, action):
         )
         values = {
             "id": customer_id,
+            "username": form_value("username", required=True, maximum=50),
             "full_name": form_value("full_name", required=True, maximum=100),
             "phone": form_value("phone", required=True, maximum=20),
             "email": form_value("email", maximum=100) or None,
@@ -25,8 +26,8 @@ def handle_action(connection, action):
             connection.execute(
                 text(
                     "INSERT INTO Customers "
-                    "(FullName, Phone, Email, PasswordHash) "
-                    "VALUES (:full_name, :phone, :email, :password_hash)"
+                    "(Username, FullName, Phone, Email, PasswordHash) "
+                    "VALUES (:username, :full_name, :phone, :email, :password_hash)"
                 ),
                 {
                     **values,
@@ -43,7 +44,7 @@ def handle_action(connection, action):
                 )
             connection.execute(
                 text(
-                    "UPDATE Customers SET FullName=:full_name, Phone=:phone, "
+                    "UPDATE Customers SET Username=:username, FullName=:full_name, Phone=:phone, "
                     "Email=:email, PasswordHash=:password_hash "
                     "WHERE CustomerID=:id AND IsDeleted=0"
                 ),
@@ -58,7 +59,7 @@ def handle_action(connection, action):
         else:
             connection.execute(
                 text(
-                    "UPDATE Customers SET FullName=:full_name, Phone=:phone, "
+                    "UPDATE Customers SET Username=:username, FullName=:full_name, Phone=:phone, "
                     "Email=:email WHERE CustomerID=:id AND IsDeleted=0"
                 ),
                 values,

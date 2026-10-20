@@ -136,6 +136,7 @@
                 <summary>+ Thêm khách hàng</summary>
                 <form class="dashboard-form dashboard-form-grid" method="post" action="{{ url_for('dashboard.action', action='customer-create') }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label>Tên tài khoản<input name="username" maxlength="50" required></label>
                     <label>Họ tên<input name="full_name" maxlength="100" required></label><label>Điện thoại<input name="phone" maxlength="20" required></label>
                     <label>Email<input type="email" name="email" maxlength="100"></label><label>Mật khẩu tạm<input type="password" name="password" minlength="8" maxlength="72" required></label>
                     <button type="submit">Thêm khách hàng</button>
@@ -148,6 +149,7 @@
                     <td>{{ "{:,.0f}".format(customer.TotalSpent or 0) }} ₫</td><td>{{ customer.RewardPoints or 0 }}</td>
                     <td class="table-actions"><details><summary>Sửa</summary><form class="inline-edit-form" method="post" action="{{ url_for('dashboard.action', action='customer-update') }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ customer.CustomerID }}">
+                        <label>Tên tài khoản<input name="username" value="{{ customer.Username or '' }}" maxlength="50" required></label>
                         <label>Họ tên<input name="full_name" value="{{ customer.FullName }}" maxlength="100" required></label><label>Điện thoại<input name="phone" value="{{ customer.Phone }}" maxlength="20" required></label>
                         <label>Email<input type="email" name="email" value="{{ customer.Email or '' }}" maxlength="100"></label><label>Mật khẩu mới<input type="password" name="password" minlength="8" maxlength="72" placeholder="Để trống nếu không đổi"></label>
                         <button type="submit">Lưu thay đổi</button>

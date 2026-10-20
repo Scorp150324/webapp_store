@@ -14,7 +14,10 @@ USE store_management_db;
 --   ADD COLUMN PasswordHash VARCHAR(255) NULL
 --   COMMENT 'Mat khau khach hang da duoc bam bang bcrypt'
 --   AFTER Email;
+-- ALTER TABLE Customers ADD COLUMN Username VARCHAR(50) NULL UNIQUE AFTER FullName;
 -- ALTER TABLE Customers ADD UNIQUE KEY uq_customers_email (Email);
+-- ALTER TABLE Password_Reset_Tokens
+--   ADD COLUMN FailedAttempts TINYINT UNSIGNED NOT NULL DEFAULT 0;
 -- Dat lai mat khau cac tai khoan mau (123456) neu da import du lieu mau truoc do:
 -- UPDATE Users SET PasswordHash = '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO'
 --   WHERE Username IN ('admin_super', 'manager_hung', 'sales_linh', 'sales_tuan',
@@ -57,6 +60,7 @@ DROP TABLE IF EXISTS Categories;
 DROP TABLE IF EXISTS Promotions;
 DROP TABLE IF EXISTS Customer_Addresses;
 DROP TABLE IF EXISTS Customer_Login_Logs;
+DROP TABLE IF EXISTS Password_Reset_Tokens;
 DROP TABLE IF EXISTS Customers;
 DROP TABLE IF EXISTS Customer_Groups;
 DROP TABLE IF EXISTS User_Logs;
@@ -134,6 +138,7 @@ CREATE TABLE Customers (
   CustomerID INT AUTO_INCREMENT PRIMARY KEY,
   GroupID INT,
   FullName VARCHAR(100) NOT NULL,
+  Username VARCHAR(50) UNIQUE,
   Phone VARCHAR(20) NOT NULL UNIQUE,
   Email VARCHAR(100) UNIQUE,
   PasswordHash VARCHAR(255) COMMENT 'Mật khẩu khách hàng đã được băm bằng bcrypt',
@@ -144,6 +149,24 @@ CREATE TABLE Customers (
   UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   DeletedAt DATETIME COMMENT 'Ngày xóa mềm',
   CONSTRAINT fk_customers_group FOREIGN KEY (GroupID) REFERENCES Customer_Groups(GroupID) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE Password_Reset_Tokens (
+  PasswordResetID BIGINT AUTO_INCREMENT PRIMARY KEY,
+  UserID INT,
+  CustomerID INT,
+  TokenHash CHAR(64) NOT NULL UNIQUE COMMENT 'HMAC-SHA-256 hash of the OTP; never store the raw token',
+  ExpiresAt DATETIME NOT NULL,
+  UsedAt DATETIME,
+  FailedAttempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_password_reset_expiry (ExpiresAt, UsedAt),
+  CONSTRAINT chk_password_reset_account CHECK (
+    (UserID IS NOT NULL AND CustomerID IS NULL)
+    OR (UserID IS NULL AND CustomerID IS NOT NULL)
+  ),
+  CONSTRAINT fk_password_reset_user FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE,
+  CONSTRAINT fk_password_reset_customer FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE Customer_Login_Logs (
@@ -409,7 +432,7 @@ INSERT INTO Customer_Groups (GroupID, GroupName, DiscountPercent, MinSpent) VALU
 
 -- 7. Customers (10 records)
 INSERT INTO Customers (CustomerID, GroupID, FullName, Phone, Email, PasswordHash, TotalSpent, RewardPoints) VALUES
-(1, 4, 'Phạm Quốc Bảo', '0988111222', 'bao.pq@gmail.com', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 125000000.00, 1250),
+(1, 4, 'Đỗ Hồng Phúc', '0899756805', 'dohongphuc2k3@gmail.com', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 125000000.00, 1250),
 (2, 3, 'Trần Thu Hà', '0988222333', 'ha.tt@gmail.com', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 42000000.00, 420),
 (3, 2, 'Nguyễn Tiến Dũng', '0988333444', 'dung.nt@gmail.com', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 18500000.00, 185),
 (4, 1, 'Đỗ Thị Huệ', '0988444555', 'hue.dt@gmail.com', '$2b$12$kuwImOR7.W3QLebRnKYh4OHh.eBjcnCqq5N2QoLfmViuAbVt1QeQO', 5200000.00, 52),
@@ -496,7 +519,7 @@ INSERT INTO Product_Images (ImageID, ProductID, ImageUrl, IsMain, SortOrder) VAL
 (7, 7, 'https://images.unsplash.com/photo-1528312457262-f67f2e153093?auto=format&fit=crop&w=800&q=80', 1, 1),
 (8, 8, 'https://images.unsplash.com/photo-1547082299-de196ea013d6?auto=format&fit=crop&w=800&q=80', 1, 1),
 (9, 9, 'https://images.unsplash.com/photo-1587826080692-f439cd0b70da?auto=format&fit=crop&w=800&q=80', 1, 1),
-(10, 10, 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=800&q=80', 1, 1);
+(10, 10,'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=800&q=80', 1, 1);
 
 -- 14. Inbound_Notes (10 records)
 INSERT INTO Inbound_Notes (InboundID, SupplierID, CreatedBy, ImportDate, TotalAmount, Status, Notes) VALUES
