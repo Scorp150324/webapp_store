@@ -17,6 +17,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from admin import dashboard_bp
+from customer import customer_bp
 from database import engine
 
 load_dotenv()
@@ -28,10 +29,28 @@ app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FLASK_ENV") == "production"
 logger = logging.getLogger(__name__)
 app.register_blueprint(dashboard_bp)
+app.register_blueprint(customer_bp)
 
 PASSWORD_RESET_OTP_TTL_MINUTES = 10
 PASSWORD_RESET_MAX_ATTEMPTS = 5
 PASSWORD_RESET_MAX_SENDS_PER_HOUR = 3
+
+
+def _use_mock_otp_delivery(channel, otp):
+    delivery_mode = os.environ.get("OTP_DELIVERY_MODE", "live").strip().lower()
+    if delivery_mode not in {"live", "mock"}:
+        raise RuntimeError("OTP_DELIVERY_MODE must be either 'live' or 'mock'")
+    if delivery_mode != "mock":
+        return False
+    if os.environ.get("FLASK_ENV", "").strip().lower() == "production":
+        raise RuntimeError("Mock OTP delivery is not allowed in production")
+
+    logger.warning(
+        "Mock %s OTP code: %s",
+        channel,
+        otp,
+    )
+    return True
 
 
 def _password_reset_token_hash(customer_id, otp):
@@ -42,6 +61,9 @@ def _password_reset_token_hash(customer_id, otp):
 
 
 def _send_password_reset_email(email, otp):
+    if _use_mock_otp_delivery("email", otp):
+        return
+
     smtp_host = os.environ.get("SMTP_HOST")
     smtp_username = os.environ.get("SMTP_USERNAME")
     smtp_password = os.environ.get("SMTP_PASSWORD")
@@ -79,6 +101,9 @@ def _send_password_reset_email(email, otp):
 
 
 def _send_password_reset_sms(phone, otp):
+    if _use_mock_otp_delivery("SMS", otp):
+        return
+
     api_key = os.environ.get("ESMS_API_KEY")
     secret_key = os.environ.get("ESMS_SECRET_KEY")
     brand_name = os.environ.get("ESMS_BRAND_NAME")
@@ -150,6 +175,7 @@ PRODUCT_CATEGORIES = {
 @app.route("/")
 def index():
     products = []
+    products_error = False
     search = request.args.get("q", "").strip()[:100]
     selected_category = request.args.get("category", "")
     if selected_category not in PRODUCT_CATEGORIES:
@@ -186,7 +212,7 @@ def index():
                             pending_ids.append(child_id)
 
             query = (
-                "SELECT p.ProductName, p.SellingPrice, p.MainImage, "
+                "SELECT p.ProductID, p.ProductName, p.SellingPrice, p.MainImage, "
                 "p.SKU, p.Barcode, c.CategoryName "
                 "FROM Products AS p "
                 "LEFT JOIN Categories AS c ON c.CategoryID = p.CategoryID "
@@ -218,10 +244,12 @@ def index():
             products = result.fetchall()
     except Exception:
         logger.exception("Không thể tải danh sách sản phẩm")
+        products_error = True
 
     return render_template(
         "index.html",
         products=products,
+        products_error=products_error,
         search=search,
         selected_category=selected_category,
         product_categories=PRODUCT_CATEGORIES,

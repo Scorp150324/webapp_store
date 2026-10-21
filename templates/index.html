@@ -31,26 +31,35 @@
     </nav>
 
     <div class="catalog-grid">
+        {% if products_error %}
+        <div class="catalog-empty" role="alert">
+            <h3>Không thể tải sản phẩm</h3>
+            <p>Không kết nối được cơ sở dữ liệu. Vui lòng kiểm tra cấu hình và trạng thái MySQL.</p>
+        </div>
+        {% else %}
         {% for product in products %}
-        <article class="product-card">
-            <div class="product-image-wrap">
-                {% if product.MainImage %}
-                <img src="{{ product.MainImage }}" alt="{{ product.ProductName }}" class="product-image">
-                {% else %}
-                <div class="product-image-placeholder" aria-label="Chưa có ảnh sản phẩm">Ảnh sản phẩm</div>
-                {% endif %}
-                {% if product.CategoryName %}
-                <span class="product-category">{{ product.CategoryName }}</span>
-                {% endif %}
-            </div>
-            <div class="product-details">
-                <h3>{{ product.ProductName }}</h3>
-                <p class="product-price">{{ "{:,.0f}".format(product.SellingPrice) }} <span>VNĐ</span></p>
-                {% if product.SKU %}
-                <p class="product-sku">Mã: {{ product.SKU }}</p>
-                {% endif %}
-            </div>
-        </article>
+        <a class="product-card-link" href="{{ url_for('customer.product_detail', product_id=product.ProductID) }}">
+            <article class="product-card">
+                <div class="product-image-wrap">
+                    {% if product.MainImage %}
+                    <img src="{{ product.MainImage }}" alt="{{ product.ProductName }}" class="product-image">
+                    {% else %}
+                    <div class="product-image-placeholder" aria-label="Chưa có ảnh sản phẩm">Ảnh sản phẩm</div>
+                    {% endif %}
+                    {% if product.CategoryName %}
+                    <span class="product-category">{{ product.CategoryName }}</span>
+                    {% endif %}
+                </div>
+                <div class="product-details">
+                    <h3>{{ product.ProductName }}</h3>
+                    <p class="product-price">{{ "{:,.0f}".format(product.SellingPrice) }} <span>VNĐ</span></p>
+                    {% if product.SKU %}
+                    <p class="product-sku">Mã: {{ product.SKU }}</p>
+                    {% endif %}
+                    <span class="product-view-details">Xem chi tiết</span>
+                </div>
+            </article>
+        </a>
         {% else %}
         <div class="catalog-empty">
             <span aria-hidden="true">⌕</span>
@@ -61,6 +70,7 @@
             {% endif %}
         </div>
         {% endfor %}
+        {% endif %}
     </div>
 </section>
 {% endblock %}

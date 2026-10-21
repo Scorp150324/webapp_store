@@ -1,14 +1,18 @@
+import os
+
 from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-# Thay đổi 'root' và mật khẩu của bạn nếu có
-DB_USER = "root"
-DB_PASSWORD = ""
-DB_HOST = "localhost"
-DB_PORT = "3306"
-DB_NAME = "store_management_db"
-
-DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
+DATABASE_URL = URL.create(
+    "mysql+pymysql",
+    username=os.environ.get("DB_USER", "root"),
+    password=os.environ.get("DB_PASSWORD", ""),
+    host=os.environ.get("DB_HOST", "localhost"),
+    port=int(os.environ.get("DB_PORT", "3306")),
+    database=os.environ.get("DB_NAME", "store_management_db"),
+    query={"charset": "utf8mb4"},
+)
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
