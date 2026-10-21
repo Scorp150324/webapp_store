@@ -1,4 +1,5 @@
 import logging
+import re
 
 from flask import abort, render_template
 from sqlalchemy import text
@@ -7,6 +8,21 @@ from sqlalchemy.exc import SQLAlchemyError
 from database import engine
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_specifications(specifications):
+    rows = []
+    for item in re.split(r",\s*|\r?\n", specifications or ""):
+        item = item.strip()
+        if not item:
+            continue
+
+        label, separator, value = item.partition(":")
+        if separator:
+            rows.append({"label": label.strip(), "value": value.strip()})
+        else:
+            rows.append({"label": "Thông tin khác", "value": item})
+    return rows
 
 
 def product_detail(product_id):
@@ -30,4 +46,8 @@ def product_detail(product_id):
     if product is None:
         abort(404)
 
-    return render_template("customer/product_detail.html", product=product)
+    return render_template(
+        "customer/product_detail.html",
+        product=product,
+        specification_rows=_parse_specifications(product["Specifications"]),
+    )

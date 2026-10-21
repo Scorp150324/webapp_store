@@ -44,13 +44,22 @@
         </div>
     </div>
 
-    <section class="product-specifications" aria-labelledby="product-specifications-title">
-        <h3 id="product-specifications-title">Thông số kỹ thuật</h3>
-        {% if product.Specifications %}
-        <p>{{ product.Specifications }}</p>
-        {% else %}
-        <p>Thông tin thông số kỹ thuật đang được cập nhật.</p>
-        {% endif %}
+    <section class="product-specifications" aria-label="Thông số kỹ thuật">
+        <details class="specifications-accordion" open>
+            <summary>Cấu hình &amp; Bộ nhớ</summary>
+            {% if specification_rows %}
+            <dl class="specifications-list">
+                {% for row in specification_rows %}
+                <div class="specification-row">
+                    <dt>{{ row.label }}</dt>
+                    <dd>{{ row.value }}</dd>
+                </div>
+                {% endfor %}
+            </dl>
+            {% else %}
+            <p class="specifications-empty">Thông tin thông số kỹ thuật đang được cập nhật.</p>
+            {% endif %}
+        </details>
     </section>
 </section>
 {% endblock %}
