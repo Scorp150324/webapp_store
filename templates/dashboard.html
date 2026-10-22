@@ -163,13 +163,13 @@
             <div class="panel-heading"><div><p class="dashboard-eyebrow">DANH MỤC CỬA HÀNG</p><h3>Quản lý sản phẩm</h3></div><span>{{ products|length }} sản phẩm</span></div>
             <details class="dashboard-create">
                 <summary>+ Thêm sản phẩm</summary>
-                <form class="dashboard-form dashboard-form-grid" method="post" action="{{ url_for('dashboard.action', action='product-create') }}">
+                <form class="dashboard-form dashboard-form-grid" method="post" enctype="multipart/form-data" action="{{ url_for('dashboard.action', action='product-create') }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <label>Tên sản phẩm<input name="product_name" maxlength="200" required></label><label>SKU<input name="sku" maxlength="50" required></label>
                     <label>Mã vạch<input name="barcode" maxlength="50"></label><label>Danh mục<select name="category_id"><option value="">Không chọn</option>{% for category in categories %}<option value="{{ category.CategoryID }}">{{ category.CategoryName }}</option>{% endfor %}</select></label>
                     <label>Nhà cung cấp<select name="supplier_id"><option value="">Không chọn</option>{% for supplier in suppliers %}<option value="{{ supplier.SupplierID }}">{{ supplier.SupplierName }}</option>{% endfor %}</select></label>
                     <label>Giá nhập<input type="number" name="cost_price" min="0" step="0.01" required></label><label>Giá bán<input type="number" name="selling_price" min="0" step="0.01" required></label>
-                    <label>Bảo hành (tháng)<input type="number" name="warranty_months" min="0" value="12" required></label><label>URL ảnh<input type="url" name="main_image" maxlength="500"></label>
+                    <label>Bảo hành (tháng)<input type="number" name="warranty_months" min="0" value="12" required></label><label>URL ảnh (nếu không tải ảnh lên)<input type="text" name="main_image" maxlength="500"></label><label>Ảnh sản phẩm (tối đa 5 MB)<input type="file" name="main_image_file" accept="image/gif,image/jpeg,image/png,image/webp"></label>
                     <label class="wide-field">Thông số<textarea name="specifications" rows="2"></textarea></label>
                     <label class="check-field"><input type="checkbox" name="is_has_serial" value="1" checked> Quản lý serial</label><button type="submit">Tạo sản phẩm</button>
                 </form>
@@ -178,18 +178,37 @@
                 <thead><tr><th>Sản phẩm</th><th>Danh mục</th><th>SKU</th><th>Tồn kho</th><th>Giá bán</th><th>Thao tác</th></tr></thead>
                 <tbody>{% for product in products %}<tr>
                     <td>{{ product.ProductName }}<small class="cell-sub">{{ product.SupplierName or "" }}</small></td><td>{{ product.CategoryName or "—" }}</td><td>{{ product.SKU }}</td><td>{{ product.StockQuantity }}</td><td>{{ "{:,.0f}".format(product.SellingPrice) }} ₫</td>
-                    <td class="table-actions"><details><summary>Sửa</summary><form class="inline-edit-form product-edit-form" method="post" action="{{ url_for('dashboard.action', action='product-update') }}">
+                    <td class="table-actions"><details><summary>Sửa</summary><form class="inline-edit-form product-edit-form" method="post" enctype="multipart/form-data" action="{{ url_for('dashboard.action', action='product-update') }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ product.ProductID }}">
                         <label>Tên<input name="product_name" value="{{ product.ProductName }}" maxlength="200" required></label><label>SKU<input name="sku" value="{{ product.SKU }}" maxlength="50" required></label>
                         <label>Mã vạch<input name="barcode" value="{{ product.Barcode or '' }}" maxlength="50"></label><label>Danh mục<select name="category_id"><option value="">Không chọn</option>{% for category in categories %}<option value="{{ category.CategoryID }}" {% if category.CategoryID == product.CategoryID %}selected{% endif %}>{{ category.CategoryName }}</option>{% endfor %}</select></label>
                         <label>Nhà cung cấp<select name="supplier_id"><option value="">Không chọn</option>{% for supplier in suppliers %}<option value="{{ supplier.SupplierID }}" {% if supplier.SupplierID == product.SupplierID %}selected{% endif %}>{{ supplier.SupplierName }}</option>{% endfor %}</select></label>
                         <label>Giá nhập<input type="number" name="cost_price" value="{{ product.CostPrice }}" min="0" step="0.01" required></label><label>Giá bán<input type="number" name="selling_price" value="{{ product.SellingPrice }}" min="0" step="0.01" required></label>
-                        <label>Bảo hành<input type="number" name="warranty_months" value="{{ product.WarrantyMonths }}" min="0" required></label><label>URL ảnh<input type="url" name="main_image" value="{{ product.MainImage or '' }}" maxlength="500"></label>
+                        <label>Bảo hành<input type="number" name="warranty_months" value="{{ product.WarrantyMonths }}" min="0" required></label><label>URL ảnh<input type="text" name="main_image" value="{{ product.MainImage or '' }}" maxlength="500"></label><label>Ảnh mới (tối đa 5 MB)<input type="file" name="main_image_file" accept="image/gif,image/jpeg,image/png,image/webp"></label>
                         <label class="wide-field">Thông số<textarea name="specifications" rows="2">{{ product.Specifications or '' }}</textarea></label><label class="check-field"><input type="checkbox" name="is_has_serial" value="1" {% if product.IsHasSerial %}checked{% endif %}> Quản lý serial</label><button type="submit">Lưu thay đổi</button>
                     </form></details>
                     <form method="post" action="{{ url_for('dashboard.action', action='product-delete') }}" onsubmit="return confirm('Ẩn sản phẩm này?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ product.ProductID }}"><button class="text-action danger-action" type="submit">Ẩn</button></form></td>
                 </tr>{% else %}<tr><td colspan="6" class="table-empty">Chưa có sản phẩm.</td></tr>{% endfor %}</tbody>
             </table></div>
+            <details class="dashboard-create">
+                <summary>Sản phẩm đã ẩn ({{ hidden_products|length }})</summary>
+                <div class="dashboard-table-wrap"><table class="dashboard-table">
+                    <thead><tr><th>Sản phẩm</th><th>Danh mục</th><th>SKU</th><th>Tồn kho</th><th>Giá bán</th><th>Ngày ẩn</th><th>Thao tác</th></tr></thead>
+                    <tbody>{% for product in hidden_products %}<tr>
+                        <td>{{ product.ProductName }}<small class="cell-sub">{{ product.SupplierName or "" }}</small></td>
+                        <td>{{ product.CategoryName or "—" }}</td><td>{{ product.SKU }}</td>
+                        <td>{{ product.StockQuantity }}</td><td>{{ "{:,.0f}".format(product.SellingPrice) }} ₫</td>
+                        <td>{{ product.DeletedAt or "—" }}</td>
+                        <td class="table-actions">
+                            <form method="post" action="{{ url_for('dashboard.action', action='product-restore') }}" onsubmit="return confirm('Khôi phục sản phẩm này về cửa hàng?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <input type="hidden" name="id" value="{{ product.ProductID }}">
+                                <button type="submit">Khôi phục</button>
+                            </form>
+                        </td>
+                    </tr>{% else %}<tr><td colspan="7" class="table-empty">Không có sản phẩm nào đang ẩn.</td></tr>{% endfor %}</tbody>
+                </table></div>
+            </details>
         </section>
 
         <section class="dashboard-panel" id="inventory-section" data-dashboard-view="inventory">

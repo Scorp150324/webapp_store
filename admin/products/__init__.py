@@ -1,7 +1,18 @@
+import os
+import secrets
+from urllib.parse import urlsplit
+
 from flask import flash, request
+from werkzeug.utils import secure_filename
 from sqlalchemy import text
 
-from admin.common import form_decimal, form_int, form_value
+from admin.common import DashboardInputError, form_decimal, form_int, form_value
+
+IMAGE_UPLOAD_FOLDER = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "image"
+)
+ALLOWED_IMAGE_EXTENSIONS = {"gif", "jpeg", "jpg", "png", "webp"}
+MAX_IMAGE_SIZE = 5 * 1024 * 1024
 
 
 def handle_action(connection, action):
@@ -22,6 +33,29 @@ def handle_action(connection, action):
             "warranty_months": form_int("warranty_months", minimum=0),
             "is_has_serial": 1 if request.form.get("is_has_serial") == "1" else 0,
         }
+        image_url = values["main_image"]
+        if image_url and not image_url.startswith("/image/"):
+            parsed_url = urlsplit(image_url)
+            if not parsed_url.scheme or not parsed_url.netloc:
+                raise DashboardInputError("URL ảnh không hợp lệ.")
+
+        image = request.files.get("main_image_file")
+        if image and image.filename:
+            filename = secure_filename(image.filename)
+            extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+            if extension not in ALLOWED_IMAGE_EXTENSIONS:
+                raise DashboardInputError("Định dạng ảnh không được hỗ trợ.")
+            image.stream.seek(0, os.SEEK_END)
+            image_size = image.stream.tell()
+            image.stream.seek(0)
+            if image_size > MAX_IMAGE_SIZE:
+                raise DashboardInputError("Ảnh không được lớn hơn 5 MB.")
+
+            stored_filename = f"{secrets.token_hex(16)}.{extension}"
+            os.makedirs(IMAGE_UPLOAD_FOLDER, exist_ok=True)
+            image.save(os.path.join(IMAGE_UPLOAD_FOLDER, stored_filename))
+            values["main_image"] = f"/image/{stored_filename}"
+
         if action == "product-create":
             connection.execute(
                 text(
@@ -64,6 +98,17 @@ def handle_action(connection, action):
             {"id": form_int("id", minimum=1)},
         )
         flash("Đã ẩn sản phẩm.", "success")
+        return
+
+    if action == "product-restore":
+        connection.execute(
+            text(
+                "UPDATE Products SET IsDeleted=0, DeletedAt=NULL "
+                "WHERE ProductID=:id AND IsDeleted=1"
+            ),
+            {"id": form_int("id", minimum=1)},
+        )
+        flash("Đã khôi phục sản phẩm. Sản phẩm đã xuất hiện lại trên cửa hàng.", "success")
         return
 
     raise ValueError(f"Unsupported product action: {action}")

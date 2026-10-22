@@ -64,6 +64,18 @@ def home():
                     "WHERE p.IsDeleted = 0 ORDER BY p.ProductID DESC LIMIT 100"
                 )
             ).mappings().all()
+            hidden_products = connection.execute(
+                text(
+                    "SELECT p.ProductID, p.SKU, p.ProductName, p.MainImage, "
+                    "p.StockQuantity, p.SellingPrice, p.DeletedAt, "
+                    "c.CategoryName, s.SupplierName "
+                    "FROM Products AS p "
+                    "LEFT JOIN Categories AS c ON c.CategoryID = p.CategoryID "
+                    "LEFT JOIN Suppliers AS s ON s.SupplierID = p.SupplierID "
+                    "WHERE p.IsDeleted = 1 ORDER BY p.DeletedAt DESC, p.ProductID DESC "
+                    "LIMIT 100"
+                )
+            ).mappings().all()
             categories = connection.execute(
                 text("SELECT CategoryID, CategoryName FROM Categories ORDER BY CategoryName")
             ).mappings().all()
@@ -116,6 +128,7 @@ def home():
         employees=employees,
         customers=customers,
         products=products,
+        hidden_products=hidden_products,
         categories=categories,
         suppliers=suppliers,
         inbound_notes=inbound_notes,

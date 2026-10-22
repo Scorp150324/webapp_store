@@ -39,7 +39,7 @@ USE store_management_db;
 -- ============================================================
 -- STORE MANAGEMENT SYSTEM SCHEMA & SAMPLE DATA
 -- Target Database: MySQL 8.0+
--- (Hình ảnh lấy trực tiếp từ link trang web / Unsplash / Wikimedia)
+-- Hình ảnh sản phẩm được lưu cục bộ trong thư mục image/
 -- ============================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -363,7 +363,7 @@ CREATE TABLE Warranties (
 
 
 -- ============================================================
--- DỮ LIỆU MẪU ĐẦY ĐỦ VỚI LINK HÌNH ẢNH TRỰC TUYẾN
+-- DỮ LIỆU MẪU ĐẦY ĐỦ VỚI HÌNH ẢNH LƯU CỤC BỘ TRONG image/
 -- ============================================================
 
 -- 1. Roles (5 records)
@@ -495,31 +495,31 @@ INSERT INTO Suppliers (SupplierID, SupplierName, Phone, Email, Address, TaxCode)
 (9, 'Công ty TNHH Ezviz Việt Nam', '02838119900', 'support@ezviz.vn', '120 Nguyễn Văn Trỗi, Q.Phú Nhuận, TP.HCM', '0308899001'),
 (10, 'Công ty TNHH MSI Việt Nam', '02838112233', 'vn@msi.com', 'Tầng 5, Tòa nhà Hải Âu, Q.Tân Bình, TP.HCM', '0304567890');
 
--- 12. Products (10 records - Cập nhật link ảnh thực tế từ internet)
+-- 12. Products (10 records - Hình ảnh được phục vụ từ thư mục image/)
 INSERT INTO Products (ProductID, CategoryID, SupplierID, SKU, Barcode, ProductName, MainImage, Specifications, CostPrice, SellingPrice, StockQuantity, WarrantyMonths, IsHasSerial) VALUES
-(1, 8, 2, 'CANON-LBP2900', '496099927123', 'Máy in Laser Canon LBP 2900 (Đơn năng, Khổ A4)', 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=800&q=80', 'Tốc độ: 12 trang/phút, Khổ giấy: A4, Độ phân giải: 2400 x 600 dpi, Cổng kết nối: USB 2.0', 3800000.00, 4450000.00, 30, 12, 1),
-(2, 9, 9, 'EZVIZ-C6N-1080P', '694154581234', 'Camera Wifi Ezviz C6N 1080P 2MP Xoay 360 độ', 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=800&q=80', 'Độ phân giải: Full HD 1080p, Góc xoay: 360 độ, Hồng ngoại đêm: 10m, Đàm thoại 2 chiều', 450000.00, 690000.00, 50, 24, 1),
-(3, 10, 5, 'PC-ASUS-ROG-STRIX', '471108199001', 'PC Gaming ASUS ROG Strix i7-13700F / RTX 4070 / 32GB RAM / 1TB SSD', 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=800&q=80', 'CPU: i7-13700F, RAM: 32GB DDR5, SSD: 1TB NVMe, VGA: RTX 4070 12GB, Nguồn: 750W 80 Plus Gold', 35000000.00, 41990000.00, 8, 36, 1),
-(4, 1, 4, 'DELL-XPS13-9315', '884116380123', 'Laptop Dell XPS 13 9315 i7-1250U / 16GB / 512GB SSD', 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=800&q=80', 'CPU: i7-1250U, RAM: 16GB LPDDR5, SSD: 512GB NVMe, Màn: 13.4 inch FHD+', 25000000.00, 29990000.00, 15, 12, 1),
-(5, 5, 1, 'IPHONE-15PM-256', '195949012345', 'iPhone 15 Pro Max 256GB Titanium Tự Nhiên', 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=800&q=80', 'Màn: 6.7 inch Super Retina XDR, Chip: A17 Pro, Cam: 48MP + 12MP + 12MP', 28500000.00, 32990000.00, 25, 12, 1),
-(6, 3, 8, 'HP-NEVERSTOP-1000W', '193808112233', 'Máy in Laser HP Neverstop 1000w In Wifi', 'https://images.unsplash.com/photo-1563206767-5b18f218e8de?auto=format&fit=crop&w=800&q=80', 'Tốc độ: 20 trang/phút, Khổ giấy: A4, Kết nối: USB / Wifi, Hộp mực nạp lại cực nhanh', 3200000.00, 3890000.00, 20, 12, 1),
-(7, 4, 3, 'HIKVISION-DS2CD2143', '695427361234', 'Camera IP Dome Hikvision DS-2CD2143G0-I 4MP Chuẩn Báo Động', 'https://images.unsplash.com/photo-1528312457262-f67f2e153093?auto=format&fit=crop&w=800&q=80', 'Độ phân giải: 4 Megapixel, Chuẩn nén H.265+, Chống nước IP67, Vỏ kim loại chống đập', 1200000.00, 1650000.00, 40, 24, 1),
-(8, 2, 4, 'PC-DELL-INSPIRON-3020', '884116441111', 'Máy tính để bàn PC Dell Inspiron 3020 MT i5-13400 / 8GB / 512GB', 'https://images.unsplash.com/photo-1547082299-de196ea013d6?auto=format&fit=crop&w=800&q=80', 'CPU: i5-13400, RAM: 8GB DDR4, SSD: 512GB, Đi kèm Bàn phím + Chuột Dell', 11500000.00, 13990000.00, 12, 12, 1),
-(9, 7, 6, 'LOGI-BRIO-4K', '097855998877', 'Webcam 4K Logitech Brio Ultra HD Tích Hợp Mic Đôi', 'https://images.unsplash.com/photo-1587826080692-f439cd0b70da?auto=format&fit=crop&w=800&q=80', 'Độ phân giải: 4K Ultra HD, Cảm biến IR nhận diện khuôn mặt Windows Hello, Mic giảm tiếng ồn', 3600000.00, 4490000.00, 25, 24, 1),
-(10, 5, 7, 'SS-S24ULTRA-512', '880609512345', 'Samsung Galaxy S24 Ultra 12GB/512GB Titanium Grey', 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=800&q=80', 'Màn: 6.8 inch Dynamic AMOLED 2X, Chip: Snapdragon 8 Gen 3, Cam: 200MP', 26000000.00, 30990000.00, 20, 12, 1);
+(1, 8, 2, 'CANON-LBP2900', '496099927123', 'Máy in Laser Canon LBP 2900 (Đơn năng, Khổ A4)', '/image/canon-lbp2900.jpg', 'Tốc độ: 12 trang/phút, Khổ giấy: A4, Độ phân giải: 2400 x 600 dpi, Cổng kết nối: USB 2.0', 3800000.00, 4450000.00, 30, 12, 1),
+(2, 9, 9, 'EZVIZ-C6N-1080P', '694154581234', 'Camera Wifi Ezviz C6N 1080P 2MP Xoay 360 độ', '/image/ezviz-c6n-1080p.jpg', 'Độ phân giải: Full HD 1080p, Góc xoay: 360 độ, Hồng ngoại đêm: 10m, Đàm thoại 2 chiều', 450000.00, 690000.00, 50, 24, 1),
+(3, 10, 5, 'PC-ASUS-ROG-STRIX', '471108199001', 'PC Gaming ASUS ROG Strix i7-13700F / RTX 4070 / 32GB RAM / 1TB SSD', '/image/asus-rog-strix-pc.jpg', 'CPU: i7-13700F, RAM: 32GB DDR5, SSD: 1TB NVMe, VGA: RTX 4070 12GB, Nguồn: 750W 80 Plus Gold', 35000000.00, 41990000.00, 8, 36, 1),
+(4, 1, 4, 'DELL-XPS13-9315', '884116380123', 'Laptop Dell XPS 13 9315 i7-1250U / 16GB / 512GB SSD', '/image/dell-xps13-9315.jpg', 'CPU: i7-1250U, RAM: 16GB LPDDR5, SSD: 512GB NVMe, Màn: 13.4 inch FHD+', 25000000.00, 29990000.00, 15, 12, 1),
+(5, 5, 1, 'IPHONE-15PM-256', '195949012345', 'iPhone 15 Pro Max 256GB Titanium Tự Nhiên', '/image/iphone-15-pro-max.jpg', 'Màn: 6.7 inch Super Retina XDR, Chip: A17 Pro, Cam: 48MP + 12MP + 12MP', 28500000.00, 32990000.00, 25, 12, 1),
+(6, 3, 8, 'HP-NEVERSTOP-1000W', '193808112233', 'Máy in Laser HP Neverstop 1000w In Wifi', '/image/hp-neverstop-1000w.jpg', 'Tốc độ: 20 trang/phút, Khổ giấy: A4, Kết nối: USB / Wifi, Hộp mực nạp lại cực nhanh', 3200000.00, 3890000.00, 20, 12, 1),
+(7, 4, 3, 'HIKVISION-DS2CD2143', '695427361234', 'Camera IP Dome Hikvision DS-2CD2143G0-I 4MP Chuẩn Báo Động', '/image/hikvision-camera.jpg', 'Độ phân giải: 4 Megapixel, Chuẩn nén H.265+, Chống nước IP67, Vỏ kim loại chống đập', 1200000.00, 1650000.00, 40, 24, 1),
+(8, 2, 4, 'PC-DELL-INSPIRON-3020', '884116441111', 'Máy tính để bàn PC Dell Inspiron 3020 MT i5-13400 / 8GB / 512GB', '/image/dell-inspiron-3020.jpg', 'CPU: i5-13400, RAM: 8GB DDR4, SSD: 512GB, Đi kèm Bàn phím + Chuột Dell', 11500000.00, 13990000.00, 12, 12, 1),
+(9, 7, 6, 'LOGI-BRIO-4K', '097855998877', 'Webcam 4K Logitech Brio Ultra HD Tích Hợp Mic Đôi', '/image/logitech-brio-4k.jpg', 'Độ phân giải: 4K Ultra HD, Cảm biến IR nhận diện khuôn mặt Windows Hello, Mic giảm tiếng ồn', 3600000.00, 4490000.00, 25, 24, 1),
+(10, 5, 7, 'SS-S24ULTRA-512', '880609512345', 'Samsung Galaxy S24 Ultra 12GB/512GB Titanium Grey', '/image/samsung-s24-ultra.jpg', 'Màn: 6.8 inch Dynamic AMOLED 2X, Chip: Snapdragon 8 Gen 3, Cam: 200MP', 26000000.00, 30990000.00, 20, 12, 1);
 
 -- 13. Product_Images (10 records)
 INSERT INTO Product_Images (ImageID, ProductID, ImageUrl, IsMain, SortOrder) VALUES
-(1, 1, 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=800&q=80', 1, 1),
-(2, 2, 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=800&q=80', 1, 1),
-(3, 3, 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=800&q=80', 1, 1),
-(4, 4, 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=800&q=80', 1, 1),
-(5, 5, 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=800&q=80', 1, 1),
-(6, 6, 'https://images.unsplash.com/photo-1563206767-5b18f218e8de?auto=format&fit=crop&w=800&q=80', 1, 1),
-(7, 7, 'https://images.unsplash.com/photo-1528312457262-f67f2e153093?auto=format&fit=crop&w=800&q=80', 1, 1),
-(8, 8, 'https://images.unsplash.com/photo-1547082299-de196ea013d6?auto=format&fit=crop&w=800&q=80', 1, 1),
-(9, 9, 'https://images.unsplash.com/photo-1587826080692-f439cd0b70da?auto=format&fit=crop&w=800&q=80', 1, 1),
-(10, 10,'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=800&q=80', 1, 1);
+(1, 1, '/image/canon-lbp2900.jpg', 1, 1),
+(2, 2, '/image/ezviz-c6n-1080p.jpg', 1, 1),
+(3, 3, '/image/asus-rog-strix-pc.jpg', 1, 1),
+(4, 4, '/image/dell-xps13-9315.jpg', 1, 1),
+(5, 5, '/image/iphone-15-pro-max.jpg', 1, 1),
+(6, 6, '/image/hp-neverstop-1000w.jpg', 1, 1),
+(7, 7, '/image/hikvision-camera.jpg', 1, 1),
+(8, 8, '/image/dell-inspiron-3020.jpg', 1, 1),
+(9, 9, '/image/logitech-brio-4k.jpg', 1, 1),
+(10, 10,'/image/samsung-s24-ultra.jpg', 1, 1);
 
 -- 14. Inbound_Notes (10 records)
 INSERT INTO Inbound_Notes (InboundID, SupplierID, CreatedBy, ImportDate, TotalAmount, Status, Notes) VALUES
@@ -626,3 +626,92 @@ INSERT INTO Warranties (WarrantyID, OrderDetailID, SerialNumber, StartDate, EndD
 (8, 8, 'DELL-PC3020-5511', '2026-10-08', '2027-10-08', 'ACTIVE'),
 (9, 9, 'LOGI-BRIO-4K-01', '2026-10-09', '2028-10-09', 'ACTIVE'),
 (10, 10, 'S24U-7761001', '2026-10-09', '2027-10-09', 'ACTIVE');
+
+-- ============================================================
+-- CAP NHAT BO SUNG (gom tu cac file migration)
+-- ============================================================
+
+-- Cap nhat duong dan anh ngoai thanh anh da luu trong thu muc image/.
+UPDATE Products
+SET MainImage = CASE ProductID
+  WHEN 1 THEN '/image/canon-lbp2900.jpg'
+  WHEN 2 THEN '/image/ezviz-c6n-1080p.jpg'
+  WHEN 3 THEN '/image/asus-rog-strix-pc.jpg'
+  WHEN 4 THEN '/image/dell-xps13-9315.jpg'
+  WHEN 5 THEN '/image/iphone-15-pro-max.jpg'
+  WHEN 6 THEN '/image/hp-neverstop-1000w.jpg'
+  WHEN 7 THEN '/image/hikvision-camera.jpg'
+  WHEN 8 THEN '/image/dell-inspiron-3020.jpg'
+  WHEN 9 THEN '/image/logitech-brio-4k.jpg'
+  WHEN 10 THEN '/image/samsung-s24-ultra.jpg'
+END
+WHERE ProductID BETWEEN 1 AND 10
+  AND MainImage LIKE 'https://images.unsplash.com/%';
+
+UPDATE Product_Images
+SET ImageUrl = CASE ProductID
+  WHEN 1 THEN '/image/canon-lbp2900.jpg'
+  WHEN 2 THEN '/image/ezviz-c6n-1080p.jpg'
+  WHEN 3 THEN '/image/asus-rog-strix-pc.jpg'
+  WHEN 4 THEN '/image/dell-xps13-9315.jpg'
+  WHEN 5 THEN '/image/iphone-15-pro-max.jpg'
+  WHEN 6 THEN '/image/hp-neverstop-1000w.jpg'
+  WHEN 7 THEN '/image/hikvision-camera.jpg'
+  WHEN 8 THEN '/image/dell-inspiron-3020.jpg'
+  WHEN 9 THEN '/image/logitech-brio-4k.jpg'
+  WHEN 10 THEN '/image/samsung-s24-ultra.jpg'
+END
+WHERE ProductID BETWEEN 1 AND 10
+  AND ImageUrl LIKE 'https://images.unsplash.com/%';
+
+-- Dam bao schema cho tinh nang dat lai mat khau tren CSDL da co san.
+SET @customer_username_column_exists = (
+  SELECT COUNT(*)
+  FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'Customers'
+    AND COLUMN_NAME = 'Username'
+);
+SET @customer_username_column_ddl = IF(
+  @customer_username_column_exists = 0,
+  'ALTER TABLE Customers ADD COLUMN Username VARCHAR(50) NULL UNIQUE AFTER FullName',
+  'SELECT 1'
+);
+PREPARE customer_username_column_stmt FROM @customer_username_column_ddl;
+EXECUTE customer_username_column_stmt;
+DEALLOCATE PREPARE customer_username_column_stmt;
+
+CREATE TABLE IF NOT EXISTS Password_Reset_Tokens (
+  PasswordResetID BIGINT AUTO_INCREMENT PRIMARY KEY,
+  UserID INT,
+  CustomerID INT,
+  TokenHash CHAR(64) NOT NULL UNIQUE COMMENT 'HMAC-SHA-256 hash of the OTP',
+  ExpiresAt DATETIME NOT NULL,
+  UsedAt DATETIME,
+  FailedAttempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_password_reset_expiry (ExpiresAt, UsedAt),
+  CONSTRAINT chk_password_reset_account CHECK (
+    (UserID IS NOT NULL AND CustomerID IS NULL)
+    OR (UserID IS NULL AND CustomerID IS NOT NULL)
+  ),
+  CONSTRAINT fk_password_reset_user FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE,
+  CONSTRAINT fk_password_reset_customer FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET @password_reset_attempt_column_exists = (
+  SELECT COUNT(*)
+  FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'Password_Reset_Tokens'
+    AND COLUMN_NAME = 'FailedAttempts'
+);
+SET @password_reset_attempt_column_ddl = IF(
+  @password_reset_attempt_column_exists = 0,
+  'ALTER TABLE Password_Reset_Tokens ADD COLUMN FailedAttempts TINYINT UNSIGNED NOT NULL DEFAULT 0',
+  'SELECT 1'
+);
+PREPARE password_reset_attempt_column_stmt
+  FROM @password_reset_attempt_column_ddl;
+EXECUTE password_reset_attempt_column_stmt;
+DEALLOCATE PREPARE password_reset_attempt_column_stmt;

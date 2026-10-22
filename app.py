@@ -12,7 +12,7 @@ from email.utils import formataddr
 
 from dotenv import load_dotenv
 import bcrypt
-from flask import Flask, flash, redirect, render_template, request, session, url_for
+from flask import Flask, flash, redirect, render_template, request, send_from_directory, session, url_for
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
@@ -34,6 +34,11 @@ app.register_blueprint(customer_bp)
 PASSWORD_RESET_OTP_TTL_MINUTES = 10
 PASSWORD_RESET_MAX_ATTEMPTS = 5
 PASSWORD_RESET_MAX_SENDS_PER_HOUR = 3
+
+
+@app.route("/image/<path:filename>")
+def uploaded_image(filename):
+    return send_from_directory(os.path.join(app.root_path, "image"), filename)
 
 
 def _use_mock_otp_delivery(channel, otp):

@@ -22,6 +22,7 @@ ACTION_HANDLERS = {
     "product-create": handle_product_action,
     "product-update": handle_product_action,
     "product-delete": handle_product_action,
+    "product-restore": handle_product_action,
     "inbound-create": handle_inventory_action,
     "outbound-create": handle_inventory_action,
 }
