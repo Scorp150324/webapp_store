@@ -7,11 +7,27 @@
     <a class="product-detail-back" href="{{ url_for('index') }}">← Quay lại danh sách sản phẩm</a>
 
     <div class="product-detail-layout">
-        <div class="product-detail-image-wrap">
-            {% if product.MainImage %}
-            <img class="product-detail-image" src="{{ product.MainImage }}" alt="{{ product.ProductName }}">
-            {% else %}
-            <div class="product-image-placeholder" aria-label="Chưa có ảnh sản phẩm">Ảnh sản phẩm</div>
+        <div class="product-detail-gallery">
+            <div class="product-detail-image-wrap">
+                {% if product_images %}
+                <img class="product-detail-image" src="{{ product_images[0] }}" alt="{{ product.ProductName }}" data-product-main-image>
+                {% else %}
+                <div class="product-image-placeholder" aria-label="Chưa có ảnh sản phẩm">Ảnh sản phẩm</div>
+                {% endif %}
+            </div>
+            {% if product_images|length > 1 %}
+            <div class="product-detail-thumbnails" aria-label="Ảnh sản phẩm">
+                {% for image_url in product_images %}
+                <button class="product-detail-thumbnail{% if loop.first %} is-active{% endif %}"
+                        type="button"
+                        data-product-thumbnail
+                        data-image-url="{{ image_url }}"
+                        aria-label="Xem ảnh {{ loop.index }} của {{ product.ProductName }}"
+                        aria-pressed="{{ 'true' if loop.first else 'false' }}">
+                    <img src="{{ image_url }}" alt="" loading="lazy">
+                </button>
+                {% endfor %}
+            </div>
             {% endif %}
         </div>
 
@@ -26,40 +42,27 @@
                 {% if product.SKU %}
                 <div><dt>Mã sản phẩm</dt><dd>{{ product.SKU }}</dd></div>
                 {% endif %}
-                {% if product.Barcode %}
-                <div><dt>Mã vạch</dt><dd>{{ product.Barcode }}</dd></div>
-                {% endif %}
-                <div>
-                    <dt>Tình trạng</dt>
-                    <dd>
-                        {% if product.StockQuantity and product.StockQuantity > 0 %}
-                        Còn hàng ({{ product.StockQuantity }})
-                        {% else %}
-                        Tạm hết hàng
-                        {% endif %}
-                    </dd>
-                </div>
-                <div><dt>Bảo hành</dt><dd>{{ product.WarrantyMonths or 0 }} tháng</dd></div>
             </dl>
+
+            <section class="product-specifications" aria-label="Thông số kỹ thuật">
+                <details class="specifications-accordion" open>
+                    <summary>Cấu hình &amp; Bộ nhớ</summary>
+                    {% if specification_rows %}
+                    <dl class="specifications-list">
+                        {% for row in specification_rows %}
+                        <div class="specification-row">
+                            <dt>{{ row.label }}</dt>
+                            <dd>{{ row.value }}</dd>
+                        </div>
+                        {% endfor %}
+                    </dl>
+                    {% else %}
+                    <p class="specifications-empty">Thông tin thông số kỹ thuật đang được cập nhật.</p>
+                    {% endif %}
+                </details>
+            </section>
         </div>
     </div>
-
-    <section class="product-specifications" aria-label="Thông số kỹ thuật">
-        <details class="specifications-accordion" open>
-            <summary>Cấu hình &amp; Bộ nhớ</summary>
-            {% if specification_rows %}
-            <dl class="specifications-list">
-                {% for row in specification_rows %}
-                <div class="specification-row">
-                    <dt>{{ row.label }}</dt>
-                    <dd>{{ row.value }}</dd>
-                </div>
-                {% endfor %}
-            </dl>
-            {% else %}
-            <p class="specifications-empty">Thông tin thông số kỹ thuật đang được cập nhật.</p>
-            {% endif %}
-        </details>
-    </section>
 </section>
+<script defer src="{{ url_for('static', filename='js/product-detail.js') }}"></script>
 {% endblock %}

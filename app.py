@@ -10,7 +10,6 @@ import urllib.request
 from email.message import EmailMessage
 from email.utils import formataddr
 
-from dotenv import load_dotenv
 import bcrypt
 from flask import Flask, flash, redirect, render_template, request, send_from_directory, session, url_for
 from sqlalchemy import text
@@ -19,8 +18,6 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from admin import dashboard_bp
 from customer import customer_bp
 from database import engine
-
-load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
@@ -263,7 +260,7 @@ def index():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if session.get("user_id"):
+    if session.get("user_id") and request.method == "GET":
         return redirect(url_for("index"))
 
     identity = ""

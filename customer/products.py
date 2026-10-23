@@ -30,15 +30,26 @@ def product_detail(product_id):
         with engine.connect() as connection:
             product = connection.execute(
                 text(
-                    "SELECT p.ProductID, p.ProductName, p.SKU, p.Barcode, "
+                    "SELECT p.ProductID, p.ProductName, p.SKU, "
                     "p.MainImage, p.Specifications, p.SellingPrice, "
-                    "p.StockQuantity, p.WarrantyMonths, c.CategoryName "
+                    "c.CategoryName "
                     "FROM Products AS p "
                     "LEFT JOIN Categories AS c ON c.CategoryID = p.CategoryID "
                     "WHERE p.ProductID = :product_id AND p.IsDeleted = 0"
                 ),
                 {"product_id": product_id},
             ).mappings().first()
+            if product is not None:
+                image_rows = connection.execute(
+                    text(
+                        "SELECT ImageUrl FROM Product_Images "
+                        "WHERE ProductID = :product_id "
+                        "ORDER BY IsMain DESC, SortOrder ASC, ImageID ASC"
+                    ),
+                    {"product_id": product_id},
+                ).mappings().all()
+            else:
+                image_rows = []
     except SQLAlchemyError:
         logger.exception("Không thể tải chi tiết sản phẩm %s", product_id)
         abort(503, description="Không thể tải chi tiết sản phẩm lúc này.")
@@ -46,8 +57,16 @@ def product_detail(product_id):
     if product is None:
         abort(404)
 
+    product_images = []
+    for image_url in [product["MainImage"]] + [
+        row["ImageUrl"] for row in image_rows
+    ]:
+        if image_url and image_url not in product_images:
+            product_images.append(image_url)
+
     return render_template(
         "customer/product_detail.html",
         product=product,
+        product_images=product_images,
         specification_rows=_parse_specifications(product["Specifications"]),
     )
