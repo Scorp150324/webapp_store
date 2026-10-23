@@ -35,6 +35,7 @@ USE store_management_db;
 -- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 -- Khong chay lai toan bo file nay de nang cap CSDL cu: cac lenh DROP TABLE ben duoi
 -- se xoa cac bang va du lieu hien co truoc khi tao lai schema.
+-- Du lieu cuoi file tao tong cong 100 san pham (10 san pham co san va 90 bo sung).
 
 -- ============================================================
 -- STORE MANAGEMENT SYSTEM SCHEMA & SAMPLE DATA
@@ -715,3 +716,512 @@ PREPARE password_reset_attempt_column_stmt
   FROM @password_reset_attempt_column_ddl;
 EXECUTE password_reset_attempt_column_stmt;
 DEALLOCATE PREPARE password_reset_attempt_column_stmt;
+
+-- ============================================================
+-- BO SUNG 90 SAN PHAM MAU
+-- Ket hop 10 san pham ban dau thanh tong cong 100 san pham.
+-- Chay lai rieng phan nay khong tao trung SKU hoac anh.
+-- ============================================================
+
+DROP TEMPORARY TABLE IF EXISTS _SampleProducts;
+CREATE TEMPORARY TABLE _SampleProducts (
+  SampleNo INT NOT NULL PRIMARY KEY,
+  CategoryID INT NOT NULL,
+  SupplierID INT NOT NULL,
+  ProductName VARCHAR(200) NOT NULL,
+  BaseCost DECIMAL(15,2) NOT NULL,
+  PriceStep DECIMAL(15,2) NOT NULL
+);
+
+INSERT INTO _SampleProducts
+  (SampleNo, CategoryID, SupplierID, ProductName, BaseCost, PriceStep)
+VALUES
+  (1, 1, 4, 'Laptop Dell Inspiron 15 3530 i5 16GB 512GB SSD', 16500000, 500000),
+  (2, 1, 4, 'Laptop Dell Latitude 3440 i5 16GB 512GB SSD', 20500000, 700000),
+  (3, 1, 8, 'Laptop HP 15-fd0234TU i5 16GB 512GB SSD', 15800000, 450000),
+  (4, 1, 8, 'Laptop HP ProBook 440 G10 i5 16GB 512GB SSD', 21500000, 800000),
+  (5, 1, 5, 'Laptop ASUS Vivobook 15 X1504VA i5 16GB 512GB SSD', 15000000, 400000),
+  (6, 1, 5, 'Laptop ASUS TUF Gaming A15 Ryzen 7 RTX 4050', 23500000, 900000),
+  (7, 1, 10, 'Laptop MSI Thin 15 B12UC i5 RTX 3050', 19500000, 750000),
+  (8, 1, 10, 'Laptop MSI Modern 14 C13M i7 16GB 512GB SSD', 18500000, 650000),
+  (9, 1, 7, 'Laptop Samsung Galaxy Book4 i5 16GB 512GB SSD', 20500000, 850000),
+  (10, 1, 4, 'Laptop Dell Vostro 3430 i7 16GB 512GB SSD', 22000000, 900000),
+
+  (11, 8, 2, 'Printer Canon imageCLASS LBP6030w Wifi', 2450000, 100000),
+  (12, 8, 2, 'Printer Canon imageCLASS MF3010 multifunction', 3850000, 150000),
+  (13, 8, 2, 'Printer Canon LBP223dw duplex Wifi', 5200000, 200000),
+  (14, 8, 8, 'Printer HP LaserJet M211dw duplex Wifi', 4200000, 180000),
+  (15, 8, 8, 'Printer HP LaserJet Pro MFP 4103fdw', 8900000, 350000),
+  (16, 8, 8, 'Printer HP Neverstop Laser 1000w Wifi', 3900000, 150000),
+  (17, 8, 9, 'Printer Epson EcoTank L3250 Wifi', 3650000, 140000),
+  (18, 8, 9, 'Printer Epson EcoTank L4260 duplex', 5800000, 250000),
+  (19, 8, 6, 'Printer Epson LQ-310 dot matrix A4', 5200000, 220000),
+  (20, 8, 2, 'Printer Brother HL-L2366DW duplex Wifi', 3900000, 160000),
+
+  (21, 10, 5, 'Gaming PC ASUS ROG Strix i5 RTX 4060 16GB 1TB', 28500000, 1100000),
+  (22, 10, 5, 'Gaming PC ASUS TUF i7 RTX 4060 Ti 32GB 1TB', 36500000, 1400000),
+  (23, 10, 10, 'Gaming PC MSI MAG i5 RTX 4060 16GB 512GB', 26500000, 1000000),
+  (24, 10, 10, 'Gaming PC MSI Infinite i7 RTX 4070 32GB 1TB', 42500000, 1700000),
+  (25, 10, 4, 'Desktop PC Dell Vostro 3020 i5 16GB 512GB SSD', 14500000, 550000),
+  (26, 10, 4, 'Desktop PC Dell OptiPlex 7010 i7 16GB 512GB SSD', 22500000, 900000),
+  (27, 10, 8, 'Desktop PC HP Pro Tower 400 G9 i5 16GB 512GB SSD', 16500000, 650000),
+  (28, 10, 7, 'Desktop PC Samsung DM500 i5 16GB 512GB SSD', 15500000, 600000),
+  (29, 10, 5, 'Desktop PC ASUS ExpertCenter D5 i5 16GB 512GB SSD', 15800000, 620000),
+  (30, 10, 10, 'Gaming PC MSI Codex R i5 RTX 4060 16GB 1TB', 27800000, 1050000),
+
+  (31, 9, 3, 'IP Camera Hikvision DS-2CD1023G0-I 2MP', 1250000, 50000),
+  (32, 9, 3, 'IP Camera Hikvision DS-2CD1043G0-I 4MP', 1850000, 80000),
+  (33, 9, 3, 'Dome Camera Hikvision DS-2CD1143G0-I 4MP', 2100000, 90000),
+  (34, 9, 3, 'PTZ Camera Hikvision DS-2DE2A404IW-DE3 4MP', 4250000, 180000),
+  (35, 9, 9, 'Wifi Camera Ezviz C6N 2MP 360-degree pan', 520000, 25000),
+  (36, 9, 9, 'Wifi Camera Ezviz H6c Pro 2K pan and tilt', 850000, 40000),
+  (37, 9, 9, 'Outdoor Camera Ezviz H8c 2K Color Night Vision', 1150000, 50000),
+  (38, 9, 3, 'IP Camera Hikvision ColorVu DS-2CD2T47G2 4MP', 2850000, 120000),
+  (39, 9, 9, 'Outdoor Camera Ezviz C3TN 2MP IP67', 750000, 35000),
+  (40, 9, 3, 'Hikvision DS-2CE76D0T-ITPFS 2MP Camera', 680000, 30000),
+
+  (41, 7, 6, 'Headset Logitech H111 wired 3.5mm', 180000, 10000),
+  (42, 7, 6, 'Headset Logitech H390 USB noise cancelling', 650000, 30000),
+  (43, 7, 6, 'Headset Logitech Zone Vibe 100 Bluetooth', 1650000, 80000),
+  (44, 7, 7, 'Samsung Galaxy Buds FE Bluetooth earbuds', 1250000, 60000),
+  (45, 7, 7, 'Samsung Galaxy Buds3 Pro earbuds', 3850000, 150000),
+  (46, 7, 5, 'ASUS TUF Gaming H3 wired headset', 850000, 40000),
+  (47, 7, 10, 'MSI Immerse GH20 gaming headset', 650000, 30000),
+  (48, 7, 6, 'Logitech G435 Lightspeed wireless headset', 1750000, 80000),
+  (49, 7, 7, 'Samsung Level On over-ear headset', 950000, 45000),
+  (50, 7, 6, 'Logitech G Pro X gaming headset', 2350000, 100000),
+
+  (51, 7, 6, 'Keyboard Logitech K120 USB', 180000, 10000),
+  (52, 7, 6, 'Keyboard Logitech K380 Bluetooth multi-device', 650000, 30000),
+  (53, 7, 5, 'Mechanical Keyboard ASUS TUF Gaming K1 RGB', 950000, 45000),
+  (54, 7, 10, 'Mechanical Keyboard MSI Vigor GK30 RGB', 850000, 40000),
+  (55, 7, 6, 'Keyboard Logitech MX Keys Mini Bluetooth', 2150000, 90000),
+  (56, 7, 7, 'Keyboard Samsung Trio 500 Bluetooth', 750000, 35000),
+  (57, 7, 5, 'Mechanical Keyboard ASUS ROG Strix Scope RX', 2850000, 120000),
+  (58, 7, 10, 'Mechanical Keyboard MSI Forge GK600 TKL', 1250000, 60000),
+  (59, 7, 6, 'Keyboard Logitech Pebble Keys 2 K380s', 750000, 35000),
+  (60, 7, 5, 'Keyboard ASUS Marshmallow KW100 Bluetooth', 550000, 25000),
+
+  (61, 7, 6, 'Mouse Logitech B100 wired USB', 90000, 5000),
+  (62, 7, 6, 'Mouse Logitech M331 Silent Plus wireless', 350000, 15000),
+  (63, 7, 6, 'Mouse Logitech MX Master 3S Bluetooth', 2150000, 90000),
+  (64, 7, 5, 'Gaming Mouse ASUS TUF Gaming M3 Gen II', 450000, 20000),
+  (65, 7, 10, 'Gaming Mouse MSI Clutch GM08', 350000, 15000),
+  (66, 7, 6, 'Gaming Mouse Logitech G502 Hero', 950000, 45000),
+  (67, 7, 7, 'Samsung Slim Mouse Bluetooth', 450000, 20000),
+  (68, 7, 5, 'Gaming Mouse ASUS ROG Gladius III Wireless', 2150000, 90000),
+  (69, 7, 6, 'Mouse Logitech Pebble M350s Bluetooth', 450000, 20000),
+  (70, 7, 10, 'Gaming Mouse MSI Versa 300 Wireless', 750000, 35000),
+
+  (71, 7, 4, 'Monitor Dell SE2222H 21.5-inch Full HD', 2350000, 100000),
+  (72, 7, 4, 'Monitor Dell P2422H 23.8-inch IPS Full HD', 3850000, 160000),
+  (73, 7, 8, 'Monitor HP M24f 23.8-inch IPS Full HD', 3250000, 140000),
+  (74, 7, 5, 'Monitor ASUS VY229HE 21.5-inch IPS 75Hz', 2450000, 100000),
+  (75, 7, 5, 'Gaming Monitor ASUS TUF VG249Q1A 23.8-inch 165Hz', 3850000, 160000),
+  (76, 7, 10, 'Gaming Monitor MSI G244F E2 23.8-inch 180Hz', 3650000, 150000),
+  (77, 7, 10, 'Monitor MSI MAG 274QRF QD E2 27-inch 2K', 6850000, 280000),
+  (78, 7, 7, 'Monitor Samsung S24C310 24-inch IPS Full HD', 2850000, 120000),
+  (79, 7, 7, 'Gaming Monitor Samsung Odyssey G5 27-inch 2K 165Hz', 5850000, 250000),
+  (80, 7, 4, 'Monitor Dell S2722DC 27-inch QHD USB-C', 6850000, 280000),
+
+  (81, 8, 2, 'Toner Canon Cartridge 325 for LBP6030', 550000, 25000),
+  (82, 8, 2, 'Toner Canon Cartridge 337 for MF211', 850000, 40000),
+  (83, 8, 2, 'Toner Canon Cartridge 051 for LBP161', 950000, 45000),
+  (84, 8, 8, 'Toner HP 107A W1107A genuine cartridge', 850000, 40000),
+  (85, 8, 8, 'Toner HP 76A CF276A genuine cartridge', 1250000, 60000),
+  (86, 9, 3, 'Hikvision DS-7608NI-K2 8-channel NVR', 3850000, 150000),
+  (87, 6, 5, 'ASUS Dual GeForce RTX 4060 8GB graphics card', 8500000, 350000),
+  (88, 6, 10, 'Intel Core i5-14400F 10-core processor', 4250000, 180000),
+  (89, 6, 5, 'ASUS Prime B760M-A Wifi DDR5 motherboard', 3850000, 160000),
+  (90, 6, 10, 'MSI PRO B650M-P AM5 DDR5 motherboard', 3150000, 140000);
+
+DROP TEMPORARY TABLE IF EXISTS _SampleProductImages;
+CREATE TEMPORARY TABLE _SampleProductImages (
+  SampleNo INT NOT NULL PRIMARY KEY,
+  MainImage VARCHAR(500)
+);
+
+-- Anh tam lay tu image/ hien co; co the thay anh theo tung SKU sau.
+INSERT INTO _SampleProductImages (SampleNo, MainImage)
+SELECT SampleNo,
+       CASE
+         WHEN SampleNo BETWEEN 1 AND 2 THEN '/image/dell-inspiron-3020.jpg'
+         WHEN SampleNo BETWEEN 3 AND 4 THEN '/image/dell-xps13-9315.jpg'
+         WHEN SampleNo BETWEEN 5 AND 6 THEN '/image/dell-inspiron-3020.jpg'
+         WHEN SampleNo BETWEEN 7 AND 8 THEN '/image/dell-xps13-9315.jpg'
+         WHEN SampleNo BETWEEN 9 AND 10 THEN '/image/dell-inspiron-3020.jpg'
+         WHEN SampleNo BETWEEN 11 AND 13 THEN '/image/canon-lbp2900.jpg'
+         WHEN SampleNo BETWEEN 14 AND 16 THEN '/image/hp-neverstop-1000w.jpg'
+         WHEN SampleNo BETWEEN 17 AND 18 THEN '/image/canon-lbp2900.jpg'
+         WHEN SampleNo = 19 THEN '/image/hp-neverstop-1000w.jpg'
+         WHEN SampleNo = 20 THEN '/image/canon-lbp2900.jpg'
+         WHEN SampleNo BETWEEN 21 AND 24 THEN '/image/asus-rog-strix-pc.jpg'
+         WHEN SampleNo BETWEEN 25 AND 26 THEN '/image/dell-inspiron-3020.jpg'
+         WHEN SampleNo = 27 THEN '/image/asus-rog-strix-pc.jpg'
+         WHEN SampleNo = 28 THEN '/image/dell-inspiron-3020.jpg'
+         WHEN SampleNo = 29 THEN '/image/asus-rog-strix-pc.jpg'
+         WHEN SampleNo = 30 THEN '/image/asus-rog-strix-pc.jpg'
+         WHEN SampleNo BETWEEN 31 AND 34 THEN '/image/hikvision-camera.jpg'
+         WHEN SampleNo BETWEEN 35 AND 37 THEN '/image/ezviz-c6n-1080p.jpg'
+         WHEN SampleNo = 38 THEN '/image/hikvision-camera.jpg'
+         WHEN SampleNo = 39 THEN '/image/ezviz-c6n-1080p.jpg'
+         WHEN SampleNo = 40 THEN '/image/hikvision-camera.jpg'
+         WHEN SampleNo BETWEEN 41 AND 43 THEN '/image/samsung-galaxy-buds-fe.jpg'
+         WHEN SampleNo = 44 THEN '/image/samsung-galaxy-buds-fe.jpg'
+         WHEN SampleNo BETWEEN 45 AND 50 THEN '/image/samsung-galaxy-buds-fe.jpg'
+         WHEN SampleNo = 51 THEN '/image/logitech-k120.jpg'
+         WHEN SampleNo = 52 THEN '/image/logitech-k380.jpg'
+         WHEN SampleNo BETWEEN 53 AND 55 THEN '/image/logitech-k120.jpg'
+         WHEN SampleNo = 56 THEN '/image/logitech-k380.jpg'
+         WHEN SampleNo BETWEEN 57 AND 60 THEN '/image/logitech-k120.jpg'
+         WHEN SampleNo = 61 THEN '/image/logitech-b100.jpg'
+         WHEN SampleNo = 62 THEN '/image/logitech-m331.jpg'
+         WHEN SampleNo = 63 THEN '/image/logitech-mx-master-3s.jpg'
+         WHEN SampleNo BETWEEN 64 AND 65 THEN '/image/logitech-g502-hero.jpg'
+         WHEN SampleNo = 66 THEN '/image/logitech-g502-hero.jpg'
+         WHEN SampleNo = 67 THEN '/image/logitech-m331.jpg'
+         WHEN SampleNo = 68 THEN '/image/logitech-g502-hero.jpg'
+         WHEN SampleNo = 69 THEN '/image/logitech-m331.jpg'
+         WHEN SampleNo = 70 THEN '/image/logitech-g502-hero.jpg'
+         WHEN SampleNo BETWEEN 71 AND 80 THEN '/image/dell-xps13-9315.jpg'
+         WHEN SampleNo BETWEEN 81 AND 83 THEN '/image/canon-lbp2900.jpg'
+         WHEN SampleNo BETWEEN 84 AND 85 THEN '/image/hp-neverstop-1000w.jpg'
+         WHEN SampleNo = 86 THEN '/image/hikvision-camera.jpg'
+         WHEN SampleNo BETWEEN 87 AND 90 THEN '/image/asus-rog-strix-pc.jpg'
+         ELSE NULL
+       END
+FROM _SampleProducts;
+
+START TRANSACTION;
+
+INSERT INTO Products (
+  CategoryID, SupplierID, SKU, Barcode, ProductName, MainImage,
+  Specifications, CostPrice, SellingPrice, StockQuantity,
+  WarrantyMonths, IsHasSerial
+)
+SELECT catalog.CategoryID,
+       catalog.SupplierID,
+       CONCAT('CATALOG-2026-', LPAD(catalog.SampleNo, 4, '0')),
+       CONCAT('991', LPAD(catalog.SampleNo, 10, '0')),
+       catalog.ProductName,
+       sample_images.MainImage,
+       CASE
+         WHEN catalog.CategoryID = 1 THEN 'Intel Core i5 or equivalent, 16GB RAM, 512GB SSD'
+         WHEN catalog.SampleNo BETWEEN 11 AND 20 THEN 'Laser or inkjet printer, USB/Wifi, manufacturer warranty'
+         WHEN catalog.CategoryID = 10 THEN 'Intel Core i5/i7 or Ryzen 5/7, 16GB RAM, 1TB SSD'
+         WHEN catalog.CategoryID = 9 THEN 'IP camera or NVR, remote network viewing support'
+         WHEN catalog.SampleNo BETWEEN 41 AND 50 THEN 'Wired or Bluetooth headset with built-in microphone'
+         WHEN catalog.SampleNo BETWEEN 51 AND 60 THEN 'USB, Bluetooth, or mechanical keyboard'
+         WHEN catalog.SampleNo BETWEEN 61 AND 70 THEN 'Optical or gaming mouse, USB or wireless connection'
+         WHEN catalog.SampleNo BETWEEN 71 AND 80 THEN 'IPS monitor, Full HD or higher resolution'
+         WHEN catalog.SampleNo BETWEEN 81 AND 85 THEN 'Genuine printer toner, compatible model cartridge'
+         WHEN catalog.SampleNo = 87 THEN '8GB GDDR6 GPU, PCI Express interface'
+         WHEN catalog.SampleNo = 88 THEN 'LGA1700 socket, 10 cores, DDR4/DDR5 support'
+         WHEN catalog.SampleNo = 89 THEN 'LGA1700 socket, B760 chipset, DDR5 support'
+         WHEN catalog.SampleNo = 90 THEN 'AM5 socket, B650 chipset, DDR5 support'
+         ELSE 'Computer component compatible with supported product models'
+       END,
+       catalog.CostPrice,
+       ROUND(catalog.CostPrice * 1.2, 0),
+       5 + MOD(catalog.SampleNo * 7, 26),
+       CASE
+         WHEN catalog.CategoryID IN (1, 9, 10) THEN 24
+         ELSE 12
+       END,
+       1
+FROM (
+  SELECT SampleNo, CategoryID, SupplierID, ProductName,
+         BaseCost + MOD(SampleNo - 1, 10) * PriceStep AS CostPrice
+  FROM _SampleProducts
+) AS catalog
+JOIN _SampleProductImages AS sample_images
+  ON sample_images.SampleNo = catalog.SampleNo
+WHERE NOT EXISTS (
+  SELECT 1 FROM Products AS existing
+  WHERE existing.SKU = CONCAT('CATALOG-2026-', LPAD(catalog.SampleNo, 4, '0'))
+);
+
+UPDATE Products AS products
+JOIN _SampleProducts AS catalog
+  ON products.SKU = CONCAT('CATALOG-2026-', LPAD(catalog.SampleNo, 4, '0'))
+JOIN _SampleProductImages AS sample_images
+  ON sample_images.SampleNo = catalog.SampleNo
+SET products.MainImage = sample_images.MainImage;
+
+DELETE product_images
+FROM Product_Images AS product_images
+JOIN Products AS products
+  ON products.ProductID = product_images.ProductID
+JOIN _SampleProducts AS catalog
+  ON products.SKU = CONCAT('CATALOG-2026-', LPAD(catalog.SampleNo, 4, '0'));
+
+INSERT INTO Product_Images (ProductID, ImageUrl, IsMain, SortOrder)
+SELECT products.ProductID, products.MainImage, 1, 1
+FROM Products AS products
+JOIN _SampleProducts AS catalog
+  ON products.SKU = CONCAT('CATALOG-2026-', LPAD(catalog.SampleNo, 4, '0'))
+JOIN _SampleProductImages AS sample_images
+  ON sample_images.SampleNo = catalog.SampleNo
+WHERE NOT EXISTS (
+  SELECT 1 FROM Product_Images AS existing
+  WHERE existing.ProductID = products.ProductID
+    AND existing.ImageUrl = products.MainImage
+)
+  AND sample_images.MainImage IS NOT NULL;
+
+COMMIT;
+DROP TEMPORARY TABLE _SampleProducts;
+DROP TEMPORARY TABLE _SampleProductImages;
+
+-- ============================================================
+-- DU LIEU MAU KIEM THU THONG KE QUAN LY
+-- Don hang phan bo trong nam 2026; don PENDING/CANCELLED khong
+-- duoc tinh vao doanh thu. Don 59 va 60 co ngay 23/10/2026.
+-- Chay lai khong tao trung don, chi tiet, thanh toan hoac giao dich.
+-- ============================================================
+
+DROP TEMPORARY TABLE IF EXISTS _SampleAnalyticsOrders;
+CREATE TEMPORARY TABLE _SampleAnalyticsOrders (
+  SampleNo INT NOT NULL PRIMARY KEY,
+  OrderDate DATETIME NOT NULL,
+  CustomerID INT NOT NULL,
+  EmployeeID INT NOT NULL,
+  OrderStatus VARCHAR(20) NOT NULL,
+  ProductSampleA INT NOT NULL,
+  QuantityA INT NOT NULL,
+  ProductSampleB INT NOT NULL,
+  QuantityB INT NOT NULL,
+  DiscountRate DECIMAL(4,3) NOT NULL
+);
+
+INSERT INTO _SampleAnalyticsOrders (
+  SampleNo, OrderDate, CustomerID, EmployeeID, OrderStatus,
+  ProductSampleA, QuantityA, ProductSampleB, QuantityB, DiscountRate
+)
+SELECT SampleNo,
+       CASE
+         WHEN SampleNo = 59 THEN '2026-10-23 10:05:00'
+         WHEN SampleNo = 60 THEN '2026-10-23 15:45:00'
+         ELSE DATE_ADD(
+           DATE_ADD('2026-01-05', INTERVAL ((SampleNo - 1) * 5) DAY),
+           INTERVAL (8 + MOD(SampleNo * 3, 10)) HOUR
+         )
+       END,
+       1 + MOD(SampleNo * 7, 10),
+       CASE MOD(SampleNo, 3)
+         WHEN 0 THEN 3
+         WHEN 1 THEN 4
+         ELSE 9
+       END,
+       CASE
+         WHEN SampleNo = 59 THEN 'PAID'
+         WHEN SampleNo = 60 THEN 'COMPLETED'
+         WHEN MOD(SampleNo, 10) = 0 THEN 'CANCELLED'
+         WHEN MOD(SampleNo, 10) = 1 THEN 'PENDING'
+         WHEN MOD(SampleNo, 10) = 2 THEN 'PAID'
+         WHEN MOD(SampleNo, 10) = 3 THEN 'SHIPPED'
+         ELSE 'COMPLETED'
+       END,
+       CASE MOD(SampleNo - 1, 10)
+         WHEN 0 THEN 1 + MOD(SampleNo * 7, 10)
+         WHEN 1 THEN 11 + MOD(SampleNo * 3, 10)
+         WHEN 2 THEN 21 + MOD(SampleNo * 7, 10)
+         WHEN 3 THEN 31 + MOD(SampleNo * 3, 10)
+         WHEN 4 THEN 41 + MOD(SampleNo * 7, 10)
+         WHEN 5 THEN 51 + MOD(SampleNo * 3, 10)
+         WHEN 6 THEN 61 + MOD(SampleNo * 7, 10)
+         WHEN 7 THEN 71 + MOD(SampleNo * 3, 10)
+         WHEN 8 THEN 81 + MOD(SampleNo * 3, 5)
+         ELSE 86 + MOD(SampleNo * 7, 5)
+       END,
+       1 + MOD(SampleNo, 3),
+       CASE MOD(SampleNo + 2, 10)
+         WHEN 0 THEN 1 + MOD(SampleNo * 3, 10)
+         WHEN 1 THEN 11 + MOD(SampleNo * 7, 10)
+         WHEN 2 THEN 21 + MOD(SampleNo * 3, 10)
+         WHEN 3 THEN 31 + MOD(SampleNo * 7, 10)
+         WHEN 4 THEN 41 + MOD(SampleNo * 3, 10)
+         WHEN 5 THEN 51 + MOD(SampleNo * 7, 10)
+         WHEN 6 THEN 61 + MOD(SampleNo * 3, 10)
+         WHEN 7 THEN 71 + MOD(SampleNo * 7, 10)
+         WHEN 8 THEN 81 + MOD(SampleNo * 7, 5)
+         ELSE 86 + MOD(SampleNo * 3, 5)
+       END,
+       1 + MOD(SampleNo * 2, 2),
+       CASE
+         WHEN MOD(SampleNo, 7) = 0 THEN 0.050
+         WHEN MOD(SampleNo, 11) = 0 THEN 0.100
+         ELSE 0.000
+       END
+FROM (
+  SELECT tens.d * 10 + ones.d + 1 AS SampleNo
+  FROM (
+    SELECT 0 AS d UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+    UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7
+    UNION ALL SELECT 8 UNION ALL SELECT 9
+  ) AS ones
+  CROSS JOIN (
+    SELECT 0 AS d UNION ALL SELECT 1 UNION ALL SELECT 2
+    UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
+  ) AS tens
+) AS order_numbers;
+
+START TRANSACTION;
+
+INSERT INTO Orders (
+  OrderCode, CustomerID, EmployeeID, PromotionID,
+  SubTotal, DiscountAmount, TotalAmount, OrderStatus, OrderDate, Notes
+)
+SELECT CONCAT('STAT-2026-', LPAD(sample_orders.SampleNo, 4, '0')),
+       sample_orders.CustomerID,
+       sample_orders.EmployeeID,
+       NULL,
+       product_a.SellingPrice * sample_orders.QuantityA
+         + product_b.SellingPrice * sample_orders.QuantityB,
+       ROUND(
+         (product_a.SellingPrice * sample_orders.QuantityA
+           + product_b.SellingPrice * sample_orders.QuantityB)
+           * sample_orders.DiscountRate,
+         0
+       ),
+       product_a.SellingPrice * sample_orders.QuantityA
+         + product_b.SellingPrice * sample_orders.QuantityB
+         - ROUND(
+           (product_a.SellingPrice * sample_orders.QuantityA
+             + product_b.SellingPrice * sample_orders.QuantityB)
+             * sample_orders.DiscountRate,
+           0
+         ),
+       sample_orders.OrderStatus,
+       sample_orders.OrderDate,
+       'Du lieu mau kiem thu thong ke'
+FROM _SampleAnalyticsOrders AS sample_orders
+JOIN Products AS product_a
+  ON product_a.SKU = CONCAT(
+    'CATALOG-2026-', LPAD(sample_orders.ProductSampleA, 4, '0')
+  )
+JOIN Products AS product_b
+  ON product_b.SKU = CONCAT(
+    'CATALOG-2026-', LPAD(sample_orders.ProductSampleB, 4, '0')
+  )
+WHERE NOT EXISTS (
+  SELECT 1 FROM Orders AS existing
+  WHERE existing.OrderCode = CONCAT(
+    'STAT-2026-', LPAD(sample_orders.SampleNo, 4, '0')
+  )
+);
+
+INSERT INTO Order_Details (
+  OrderID, ProductID, Quantity, UnitPrice, TotalPrice
+)
+SELECT lines.OrderID, lines.ProductID, lines.Quantity,
+       lines.UnitPrice, lines.UnitPrice * lines.Quantity
+FROM (
+  SELECT orders.OrderID, product_a.ProductID,
+         sample_orders.QuantityA AS Quantity,
+         product_a.SellingPrice AS UnitPrice
+  FROM _SampleAnalyticsOrders AS sample_orders
+  JOIN Orders AS orders
+    ON orders.OrderCode = CONCAT(
+      'STAT-2026-', LPAD(sample_orders.SampleNo, 4, '0')
+    )
+  JOIN Products AS product_a
+    ON product_a.SKU = CONCAT(
+      'CATALOG-2026-', LPAD(sample_orders.ProductSampleA, 4, '0')
+    )
+  UNION ALL
+  SELECT orders.OrderID, product_b.ProductID,
+         sample_orders.QuantityB AS Quantity,
+         product_b.SellingPrice AS UnitPrice
+  FROM _SampleAnalyticsOrders AS sample_orders
+  JOIN Orders AS orders
+    ON orders.OrderCode = CONCAT(
+      'STAT-2026-', LPAD(sample_orders.SampleNo, 4, '0')
+    )
+  JOIN Products AS product_b
+    ON product_b.SKU = CONCAT(
+      'CATALOG-2026-', LPAD(sample_orders.ProductSampleB, 4, '0')
+    )
+) AS lines
+WHERE NOT EXISTS (
+  SELECT 1 FROM Order_Details AS existing
+  WHERE existing.OrderID = lines.OrderID
+    AND existing.ProductID = lines.ProductID
+);
+
+INSERT INTO Payments (
+  OrderID, Amount, PaidAmount, PaymentMethod, PaymentStatus, CreatedAt
+)
+SELECT orders.OrderID,
+       orders.TotalAmount,
+       CASE
+         WHEN orders.OrderStatus IN ('PAID', 'COMPLETED', 'SHIPPED')
+           THEN orders.TotalAmount
+         WHEN orders.OrderStatus = 'PENDING'
+              AND MOD(sample_orders.SampleNo, 2) = 0
+           THEN ROUND(orders.TotalAmount * 0.250, 0)
+         ELSE 0
+       END,
+       CASE MOD(sample_orders.SampleNo, 5)
+         WHEN 0 THEN 'CASH'
+         WHEN 1 THEN 'BANK_TRANSFER'
+         WHEN 2 THEN 'CARD'
+         WHEN 3 THEN 'MOMO'
+         ELSE 'VNPAY'
+       END,
+       CASE
+         WHEN orders.OrderStatus IN ('PAID', 'COMPLETED', 'SHIPPED')
+           THEN 'PAID'
+         WHEN orders.OrderStatus = 'PENDING'
+              AND MOD(sample_orders.SampleNo, 2) = 0
+           THEN 'PARTIALLY_PAID'
+         ELSE 'UNPAID'
+       END,
+       DATE_ADD(sample_orders.OrderDate, INTERVAL 10 MINUTE)
+FROM _SampleAnalyticsOrders AS sample_orders
+JOIN Orders AS orders
+  ON orders.OrderCode = CONCAT(
+    'STAT-2026-', LPAD(sample_orders.SampleNo, 4, '0')
+  )
+WHERE NOT EXISTS (
+  SELECT 1 FROM Payments AS existing
+  WHERE existing.OrderID = orders.OrderID
+);
+
+INSERT INTO Payment_Transactions (
+  PaymentID, TransCode, Amount, PayGateway, GatewayResponse,
+  Status, TransactionTime
+)
+SELECT payments.PaymentID,
+       CONCAT('STATPAY-2026-', LPAD(sample_orders.SampleNo, 4, '0')),
+       payments.PaidAmount,
+       payments.PaymentMethod,
+       CASE
+         WHEN payments.PaymentStatus = 'PAID'
+           THEN '{"status":"SUCCESS","source":"sample"}'
+         WHEN orders.OrderStatus = 'CANCELLED'
+           THEN '{"status":"FAILED","source":"sample"}'
+         ELSE '{"status":"PENDING","source":"sample"}'
+       END,
+       CASE
+         WHEN payments.PaymentStatus = 'PAID' THEN 'SUCCESS'
+         WHEN orders.OrderStatus = 'CANCELLED' THEN 'FAILED'
+         ELSE 'PENDING'
+       END,
+       payments.CreatedAt
+FROM _SampleAnalyticsOrders AS sample_orders
+JOIN Orders AS orders
+  ON orders.OrderCode = CONCAT(
+    'STAT-2026-', LPAD(sample_orders.SampleNo, 4, '0')
+  )
+JOIN Payments AS payments
+  ON payments.OrderID = orders.OrderID
+WHERE NOT EXISTS (
+  SELECT 1 FROM Payment_Transactions AS existing
+  WHERE existing.TransCode = CONCAT(
+    'STATPAY-2026-', LPAD(sample_orders.SampleNo, 4, '0')
+  )
+);
+
+COMMIT;
+DROP TEMPORARY TABLE _SampleAnalyticsOrders;

@@ -42,7 +42,7 @@
                 <div><p class="dashboard-eyebrow">BÁO CÁO DOANH THU</p><h3>Thống kê theo thời gian</h3></div>
                 <span>{{ period_label }}</span>
             </div>
-            <form class="analytics-filters" method="get" action="{{ url_for('dashboard.home') }}">
+            <form class="analytics-filters" method="get" action="{{ url_for('dashboard.home') }}#analytics-section">
                 <label>Khoảng thống kê
                     <select name="period">
                         <option value="day" {% if period == "day" %}selected{% endif %}>Theo ngày</option>
