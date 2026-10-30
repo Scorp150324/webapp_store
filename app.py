@@ -14,16 +14,22 @@ import bcrypt
 from flask import Flask, flash, redirect, render_template, request, send_from_directory, session, url_for
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from waitress import serve
 
 from admin import dashboard_bp
 from customer import customer_bp
 from database import engine
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
+secret_key = os.environ.get("SECRET_KEY")
+if not secret_key and os.environ.get("FLASK_ENV", "").strip().lower() == "production":
+    raise RuntimeError("SECRET_KEY must be configured in production")
+app.secret_key = secret_key or secrets.token_hex(32)
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FLASK_ENV") == "production"
+app.config["SESSION_COOKIE_SECURE"] = (
+    os.environ.get("FLASK_ENV", "").strip().lower() == "production"
+)
 logger = logging.getLogger(__name__)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(customer_bp)
@@ -709,4 +715,8 @@ def logout():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    serve(
+        app,
+        host=os.environ.get("HOST", "0.0.0.0"),
+        port=int(os.environ.get("PORT", "5000")),
+    )
