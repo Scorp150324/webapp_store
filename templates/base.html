@@ -21,12 +21,12 @@
                 {% if session.get("user_type") == "staff" and session.get("role_id") in [1, 5] %}
                 <a class="auth-nav-link" href="{{ url_for('dashboard.home') }}">Quản lý</a>
                 {% endif %}
-                <form method="post" action="{{ url_for('logout') }}">
+                <form method="post" action="{{ url_for('site.logout') }}">
                     <button type="submit">Đăng xuất</button>
                 </form>
                 {% else %}
-                <a class="auth-nav-link" href="{{ url_for('login') }}">Đăng nhập</a>
-                <a class="auth-nav-link auth-nav-link-primary" href="{{ url_for('register') }}">Đăng ký</a>
+                <a class="auth-nav-link" href="{{ url_for('site.login') }}">Đăng nhập</a>
+                <a class="auth-nav-link auth-nav-link-primary" href="{{ url_for('site.register') }}">Đăng ký</a>
                 {% endif %}
             </nav>
         </div>

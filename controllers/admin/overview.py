@@ -5,7 +5,7 @@ from datetime import date
 from flask import abort, render_template, request, session
 from sqlalchemy import text
 
-from admin.analytics import get_period, load_analytics
+from controllers.admin.analytics import get_period, load_analytics
 from database import engine
 
 logger = logging.getLogger(__name__)

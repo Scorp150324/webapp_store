@@ -3,11 +3,11 @@ import logging
 from flask import abort, flash, redirect, session, url_for
 from sqlalchemy.exc import IntegrityError
 
-from admin.common import DashboardInputError
-from admin.customers import handle_action as handle_customer_action
-from admin.employees import handle_action as handle_employee_action
-from admin.inventory import handle_action as handle_inventory_action
-from admin.products import handle_action as handle_product_action
+from controllers.admin.common import DashboardInputError
+from controllers.admin.customers import handle_action as handle_customer_action
+from controllers.admin.employees import handle_action as handle_employee_action
+from controllers.admin.inventory import handle_action as handle_inventory_action
+from controllers.admin.products import handle_action as handle_product_action
 from database import engine
 
 logger = logging.getLogger(__name__)

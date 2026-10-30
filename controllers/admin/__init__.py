@@ -1,6 +1,6 @@
 from flask import Blueprint, abort, request, session
 
-from admin.common import MANAGER_ROLE_IDS, check_csrf_token
+from controllers.admin.common import MANAGER_ROLE_IDS, check_csrf_token
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
@@ -16,8 +16,8 @@ def guard_dashboard():
         check_csrf_token()
 
 
-from admin.actions import action
-from admin.overview import home
+from controllers.admin.actions import action
+from controllers.admin.overview import home
 
 dashboard_bp.add_url_rule("/dashboard", endpoint="home", view_func=home)
 dashboard_bp.add_url_rule(

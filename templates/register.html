@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
 <section class="auth-card">
-    <a class="auth-back" href="{{ url_for('index') }}"
+    <a class="auth-back" href="{{ url_for('site.index') }}"
        aria-label="Quay về trang chủ" title="Quay về trang chủ">←</a>
     <div class="auth-heading">
         <p class="auth-eyebrow">PHÚC THỊNH ICT</p>
         <h2>Tạo tài khoản</h2>
         <p>Điền thông tin bên dưới để đăng ký tài khoản mới.</p>
     </div>
-    <form class="auth-form" method="post" action="{{ url_for('register') }}">
+    <form class="auth-form" method="post" action="{{ url_for('site.register') }}">
         <label for="full_name">Họ và tên</label>
         <input id="full_name" name="full_name" type="text"
                autocomplete="name" maxlength="100" required>
@@ -35,6 +35,6 @@
 
         <button class="auth-submit" type="submit">Đăng ký</button>
     </form>
-    <p class="auth-switch">Đã có tài khoản? <a href="{{ url_for('login') }}">Đăng nhập</a></p>
+    <p class="auth-switch">Đã có tài khoản? <a href="{{ url_for('site.login') }}">Đăng nhập</a></p>
 </section>
 {% endblock %}

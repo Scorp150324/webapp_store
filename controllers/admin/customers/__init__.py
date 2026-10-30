@@ -2,7 +2,7 @@ import bcrypt
 from flask import flash, request
 from sqlalchemy import text
 
-from admin.common import DashboardInputError, form_int, form_value
+from controllers.admin.common import DashboardInputError, form_int, form_value
 
 
 def handle_action(connection, action):

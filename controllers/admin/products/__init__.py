@@ -6,7 +6,7 @@ from flask import flash, request
 from werkzeug.utils import secure_filename
 from sqlalchemy import text
 
-from admin.common import DashboardInputError, form_decimal, form_int, form_value
+from controllers.admin.common import DashboardInputError, form_decimal, form_int, form_value
 
 IMAGE_UPLOAD_FOLDER = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "image"

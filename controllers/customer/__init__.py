@@ -9,10 +9,10 @@ def require_customer_login():
         if session.get("user_id"):
             abort(403)
         flash("Vui lòng đăng nhập tài khoản khách hàng để xem chi tiết sản phẩm.", "error")
-        return redirect(url_for("login"))
+        return redirect(url_for("site.login"))
 
 
-from customer.products import product_detail
+from controllers.customer.products import product_detail
 
 customer_bp.add_url_rule(
     "/products/<int:product_id>",

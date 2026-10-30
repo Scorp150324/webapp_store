@@ -4,10 +4,11 @@
 {% endblock %}
 {% block content %}
 <section class="product-detail">
-    <a class="product-detail-back" href="{{ url_for('index') }}">← Quay lại danh sách sản phẩm</a>
-
     <div class="product-detail-layout">
         <div class="product-detail-gallery">
+            <a class="product-detail-back" href="{{ url_for('site.index') }}"
+               aria-label="Quay lại danh sách sản phẩm"
+               title="Quay lại danh sách sản phẩm">←</a>
             <div class="product-detail-image-wrap">
                 {% if product_images %}
                 <img class="product-detail-image" src="{{ product_images[0] }}" alt="{{ product.ProductName }}" data-product-main-image>

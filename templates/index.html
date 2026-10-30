@@ -9,7 +9,7 @@
         <span class="catalog-count">{{ products|length }} sản phẩm</span>
     </div>
 
-    <form class="catalog-search" method="get" action="{{ url_for('index') }}">
+    <form class="catalog-search" method="get" action="{{ url_for('site.index') }}">
         <label class="visually-hidden" for="product-search">Tìm sản phẩm</label>
         <span class="catalog-search-icon" aria-hidden="true">⌕</span>
         <input id="product-search" name="q" type="search" value="{{ search }}"
@@ -23,10 +23,10 @@
 
     <nav class="catalog-filters" aria-label="Lọc sản phẩm theo danh mục">
         <a class="catalog-filter{% if not selected_category %} is-active{% endif %}"
-           href="{{ url_for('index', q=search or None) }}">Tất cả</a>
+           href="{{ url_for('site.index', q=search or None) }}">Tất cả</a>
         {% for slug, category in product_categories.items() %}
         <a class="catalog-filter{% if selected_category == slug %} is-active{% endif %}"
-           href="{{ url_for('index', q=search or None, category=slug) }}">{{ category.label }}</a>
+           href="{{ url_for('site.index', q=search or None, category=slug) }}">{{ category.label }}</a>
         {% endfor %}
     </nav>
 
@@ -66,7 +66,7 @@
             <h3>Không tìm thấy sản phẩm</h3>
             <p>Thử thay đổi từ khóa hoặc chọn một danh mục khác.</p>
             {% if search or selected_category %}
-            <a href="{{ url_for('index') }}">Xóa bộ lọc</a>
+            <a href="{{ url_for('site.index') }}">Xóa bộ lọc</a>
             {% endif %}
         </div>
         {% endfor %}
