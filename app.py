@@ -330,7 +330,7 @@ def login():
                         session["full_name"] = customer["FullName"]
                         flash(
                             f"Đăng nhập thành công. Xin chào {customer['FullName']}!",
-                            "success",
+                            "login-success",
                         )
                         return redirect(url_for("index"))
 
@@ -354,7 +354,10 @@ def login():
                 session["username"] = user["Username"]
                 session["full_name"] = user["FullName"]
                 session["role_id"] = user["RoleID"]
-                flash(f"Đăng nhập thành công. Xin chào {user['FullName']}!", "success")
+                flash(
+                    f"Đăng nhập thành công. Xin chào {user['FullName']}!",
+                    "login-success",
+                )
                 return redirect(url_for("index"))
         except ValueError:
             logger.exception("Hash mật khẩu trong cơ sở dữ liệu không hợp lệ")
