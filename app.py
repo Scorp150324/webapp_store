@@ -7,6 +7,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
 from sqlalchemy.exc import SQLAlchemyError
+from waitress import serve
 from werkzeug.exceptions import HTTPException
 
 load_dotenv()
@@ -119,3 +120,11 @@ def create_app():
 
 
 app = create_app()
+
+
+if __name__ == "__main__":
+    serve(
+        app,
+        host=os.environ.get("HOST", "0.0.0.0"),
+        port=int(os.environ.get("PORT", "5000")),
+    )

@@ -2,19 +2,22 @@
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/product-detail.css') }}">
 {% endblock %}
+{% block site_header %}{% endblock %}
 {% block content %}
 <section class="product-detail">
     <div class="product-detail-layout">
         <div class="product-detail-gallery">
-            <a class="product-detail-back" href="{{ url_for('site.index') }}"
-               aria-label="Quay lại danh sách sản phẩm"
-               title="Quay lại danh sách sản phẩm">←</a>
             <div class="product-detail-image-wrap">
-                {% if product_images %}
-                <img class="product-detail-image" src="{{ product_images[0] }}" alt="{{ product.ProductName }}" data-product-main-image>
-                {% else %}
-                <div class="product-image-placeholder" aria-label="Chưa có ảnh sản phẩm">Ảnh sản phẩm</div>
-                {% endif %}
+                <div class="product-detail-image-stage">
+                    <a class="product-detail-back" href="{{ url_for('site.index') }}"
+                       aria-label="Quay lại danh sách sản phẩm"
+                       title="Quay lại danh sách sản phẩm">&lt;</a>
+                    {% if product_images %}
+                    <img class="product-detail-image" src="{{ product_images[0] }}" alt="{{ product.ProductName }}" data-product-main-image>
+                    {% else %}
+                    <div class="product-image-placeholder" aria-label="Chưa có ảnh sản phẩm">Ảnh sản phẩm</div>
+                    {% endif %}
+                </div>
             </div>
             {% if product_images|length > 1 %}
             <div class="product-detail-thumbnails" aria-label="Ảnh sản phẩm">
