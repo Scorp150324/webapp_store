@@ -34,7 +34,7 @@
         {% if products_error %}
         <div class="catalog-empty" role="alert">
             <h3>Không thể tải sản phẩm</h3>
-            <p>Không kết nối được cơ sở dữ liệu. Vui lòng kiểm tra cấu hình và trạng thái MySQL.</p>
+            <p>Không thể kết nối cơ sở dữ liệu. Vui lòng kiểm tra cấu hình PostgreSQL và thử lại.</p>
         </div>
         {% else %}
         {% for product in products %}
