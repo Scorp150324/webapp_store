@@ -1,9 +1,8 @@
 from flask import abort, jsonify, session
-from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from api import api_bp
-from database import engine
+from database import engine, text
 
 MANAGER_ROLE_IDS = {1, 5}
 
@@ -28,7 +27,7 @@ def dashboard_summary():
                     "WHERE IsDeleted = 0) AS stock_count, "
                     "(SELECT COALESCE(SUM(TotalAmount), 0) FROM Orders "
                     "WHERE OrderStatus IN ('PAID', 'COMPLETED', 'SHIPPED')) AS sales_total, "
-                    "(SELECT COUNT(*) FROM Orders WHERE OrderDate >= CURDATE()) "
+                    "(SELECT COUNT(*) FROM Orders WHERE OrderDate >= CURRENT_DATE) "
                     "AS orders_today"
                 )
             ).mappings().one()

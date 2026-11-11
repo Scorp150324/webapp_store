@@ -1,11 +1,10 @@
 from decimal import Decimal
 
 from flask import abort, jsonify, request
-from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from api import api_bp
-from database import engine
+from database import engine, text
 
 
 def _serialize_product(row):
@@ -31,8 +30,8 @@ def list_products():
     parameters = {"limit": per_page, "offset": (page - 1) * per_page}
     if search:
         where_clause += (
-            " AND (p.ProductName LIKE :search OR p.SKU LIKE :search "
-            "OR p.Barcode LIKE :search OR p.Specifications LIKE :search)"
+            " AND (p.ProductName ILIKE :search OR p.SKU ILIKE :search "
+            "OR p.Barcode ILIKE :search OR p.Specifications ILIKE :search)"
         )
         parameters["search"] = f"%{search}%"
 

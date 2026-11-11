@@ -1,6 +1,6 @@
 import bcrypt
 from flask import flash, request
-from sqlalchemy import text
+from database import text
 
 from controllers.admin.common import DashboardInputError, form_int, form_value
 

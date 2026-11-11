@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/product-detail.css') }}">
+<link rel="stylesheet" href="/static/css/product-detail.css">
 {% endblock %}
 {% block site_header %}{% endblock %}
 {% block content %}
@@ -68,5 +68,5 @@
         </div>
     </div>
 </section>
-<script defer src="{{ url_for('static', filename='js/product-detail.js') }}"></script>
+<script defer src="/static/js/product-detail.js"></script>
 {% endblock %}

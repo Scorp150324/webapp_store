@@ -12,10 +12,9 @@ from email.utils import formataddr
 
 import bcrypt
 from flask import Blueprint, current_app, flash, redirect, render_template, request, send_from_directory, session, url_for
-from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from database import engine
+from database import engine, text
 
 logger = logging.getLogger(__name__)
 site_bp = Blueprint("site", __name__)
@@ -36,7 +35,10 @@ def _use_mock_otp_delivery(channel, otp):
         raise RuntimeError("OTP_DELIVERY_MODE must be either 'live' or 'mock'")
     if delivery_mode != "mock":
         return False
-    if os.environ.get("FLASK_ENV", "").strip().lower() == "production":
+    if (
+        os.environ.get("FLASK_ENV", "").strip().lower() == "production"
+        or os.environ.get("VERCEL")
+    ):
         raise RuntimeError("Mock OTP delivery is not allowed in production")
 
     logger.warning(
@@ -215,10 +217,10 @@ def index():
             parameters = {}
             if search:
                 query += (
-                    " AND (p.ProductName LIKE :search "
-                    "OR p.SKU LIKE :search "
-                    "OR p.Barcode LIKE :search "
-                    "OR p.Specifications LIKE :search)"
+                    " AND (p.ProductName ILIKE :search "
+                    "OR p.SKU ILIKE :search "
+                    "OR p.Barcode ILIKE :search "
+                    "OR p.Specifications ILIKE :search)"
                 )
                 parameters["search"] = f"%{search}%"
             if selected_category:
@@ -403,7 +405,7 @@ def forgot_password():
                     connection.execute(
                         text(
                             "DELETE FROM Password_Reset_Tokens "
-                            "WHERE ExpiresAt < DATE_SUB(NOW(), INTERVAL 1 DAY)"
+                            "WHERE ExpiresAt < CURRENT_TIMESTAMP - INTERVAL '1 day'"
                         )
                     )
                     customer = connection.execute(
@@ -415,7 +417,7 @@ def forgot_password():
                             text(
                                 "SELECT COUNT(*) FROM Password_Reset_Tokens "
                                 "WHERE CustomerID = :customer_id "
-                                "AND CreatedAt >= DATE_SUB(NOW(), INTERVAL 1 HOUR)"
+                                "AND CreatedAt >= CURRENT_TIMESTAMP - INTERVAL '1 hour'"
                             ),
                             {"customer_id": customer["CustomerID"]},
                         ).scalar_one()
@@ -426,7 +428,7 @@ def forgot_password():
                             )
                             connection.execute(
                                 text(
-                                    "UPDATE Password_Reset_Tokens SET UsedAt = NOW() "
+                                    "UPDATE Password_Reset_Tokens SET UsedAt = CURRENT_TIMESTAMP "
                                     "WHERE CustomerID = :customer_id AND UsedAt IS NULL"
                                 ),
                                 {"customer_id": customer["CustomerID"]},
@@ -436,15 +438,15 @@ def forgot_password():
                                     "INSERT INTO Password_Reset_Tokens "
                                     "(CustomerID, TokenHash, ExpiresAt, FailedAttempts) "
                                     "VALUES (:customer_id, :token_hash, "
-                                    "DATE_ADD(NOW(), INTERVAL "
-                                    f"{PASSWORD_RESET_OTP_TTL_MINUTES} MINUTE), 0)"
+                                    f"CURRENT_TIMESTAMP + INTERVAL '{PASSWORD_RESET_OTP_TTL_MINUTES} minutes', 0) "
+                                    "RETURNING PasswordResetID"
                                 ),
                                 {
                                     "customer_id": customer["CustomerID"],
                                     "token_hash": token_hash,
                                 },
                             )
-                            reset_id = result.lastrowid
+                            reset_id = result.scalar_one()
                             destination = (
                                 customer["Email"] if email_identity else customer["Phone"]
                             )
@@ -476,7 +478,7 @@ def forgot_password():
                         with engine.begin() as connection:
                             connection.execute(
                                 text(
-                                    "UPDATE Password_Reset_Tokens SET UsedAt = NOW() "
+                                    "UPDATE Password_Reset_Tokens SET UsedAt = CURRENT_TIMESTAMP "
                                     "WHERE PasswordResetID = :reset_id "
                                     "AND UsedAt IS NULL"
                                 ),
@@ -537,7 +539,7 @@ def forgot_password():
                                     "FROM Password_Reset_Tokens "
                                     "WHERE PasswordResetID = :reset_id "
                                     "AND CustomerID = :customer_id "
-                                    "AND UsedAt IS NULL AND ExpiresAt > NOW() "
+                                    "AND UsedAt IS NULL AND ExpiresAt > CURRENT_TIMESTAMP "
                                     "FOR UPDATE"
                                 ),
                                 {
@@ -569,7 +571,7 @@ def forgot_password():
                                 )
                             connection.execute(
                                 text(
-                                    "UPDATE Password_Reset_Tokens SET UsedAt = NOW() "
+                                    "UPDATE Password_Reset_Tokens SET UsedAt = CURRENT_TIMESTAMP "
                                     "WHERE CustomerID = :customer_id AND UsedAt IS NULL"
                                 ),
                                 {"customer_id": customer_id},
@@ -583,7 +585,7 @@ def forgot_password():
                                     "UPDATE Password_Reset_Tokens "
                                     "SET FailedAttempts = :attempts, "
                                     "UsedAt = CASE WHEN :attempts >= :max_attempts "
-                                    "THEN NOW() ELSE UsedAt END "
+                                    "THEN CURRENT_TIMESTAMP ELSE UsedAt END "
                                     "WHERE PasswordResetID = :reset_id"
                                 ),
                                 {

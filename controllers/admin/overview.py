@@ -3,10 +3,8 @@ import secrets
 from datetime import date
 
 from flask import abort, render_template, request, session
-from sqlalchemy import text
-
 from controllers.admin.analytics import get_period, load_analytics
-from database import engine
+from database import engine, text
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +28,7 @@ def home():
                     "(SELECT COALESCE(SUM(TotalAmount), 0) FROM Orders "
                     "WHERE OrderStatus IN ('PAID', 'COMPLETED', 'SHIPPED')) AS sales_total, "
                     "(SELECT COUNT(*) FROM Orders "
-                    "WHERE OrderDate >= CURDATE()) AS orders_today"
+                    "WHERE OrderDate >= CURRENT_DATE) AS orders_today"
                 )
             ).mappings().one()
             roles = connection.execute(

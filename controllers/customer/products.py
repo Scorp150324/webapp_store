@@ -2,10 +2,9 @@ import logging
 import re
 
 from flask import abort, render_template
-from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-from database import engine
+from database import engine, text
 
 logger = logging.getLogger(__name__)
 

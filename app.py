@@ -5,7 +5,7 @@ from http import HTTPStatus
 from pathlib import Path
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, send_from_directory
 from sqlalchemy.exc import SQLAlchemyError
 from waitress import serve
 from werkzeug.exceptions import HTTPException
@@ -17,22 +17,30 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 
 
 def create_app():
+    is_production = (
+        os.environ.get("FLASK_ENV", "").strip().lower() == "production"
+        or bool(os.environ.get("VERCEL"))
+    )
     secret_key = os.environ.get("SECRET_KEY")
-    if not secret_key and os.environ.get("FLASK_ENV", "").strip().lower() == "production":
+    if not secret_key and is_production:
         raise RuntimeError("SECRET_KEY must be configured in production")
 
     app = Flask(
         __name__,
         template_folder=str(PROJECT_ROOT / "templates"),
-        static_folder=str(PROJECT_ROOT / "static"),
+        static_folder=None,
     )
     app.secret_key = secret_key or secrets.token_hex(32)
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-    app.config["SESSION_COOKIE_SECURE"] = (
-        os.environ.get("FLASK_ENV", "").strip().lower() == "production"
-    )
+    app.config["SESSION_COOKIE_SECURE"] = is_production
     app.config["IMAGE_FOLDER"] = str(PROJECT_ROOT / "image")
+
+    if not os.environ.get("VERCEL"):
+
+        @app.get("/static/<path:filename>")
+        def local_static_file(filename):
+            return send_from_directory(PROJECT_ROOT / "static", filename)
 
     from api import api_bp
     from controllers.admin import dashboard_bp

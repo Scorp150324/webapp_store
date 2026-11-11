@@ -2,7 +2,7 @@ from calendar import monthrange
 from datetime import date, timedelta
 
 from flask import abort
-from sqlalchemy import text
+from database import text
 
 VALID_ORDER_STATUSES = ("PAID", "COMPLETED", "SHIPPED")
 
@@ -21,7 +21,7 @@ def get_period(period, selected_date_value):
         range_start = selected_date
         range_end = range_start + timedelta(days=1)
         period_label = selected_date.strftime("%d/%m/%Y")
-        bucket_expression = "HOUR(OrderDate)"
+        bucket_expression = "EXTRACT(HOUR FROM OrderDate)"
         bucket_numbers = range(24)
         chart_labels = [f"{hour:02d}:00" for hour in bucket_numbers]
     elif period == "month":
@@ -32,14 +32,14 @@ def get_period(period, selected_date_value):
             else range_start.replace(month=range_start.month + 1)
         )
         period_label = selected_date.strftime("%m/%Y")
-        bucket_expression = "DAYOFMONTH(OrderDate)"
+        bucket_expression = "EXTRACT(DAY FROM OrderDate)"
         bucket_numbers = range(1, monthrange(range_start.year, range_start.month)[1] + 1)
         chart_labels = [str(day) for day in bucket_numbers]
     else:
         range_start = selected_date.replace(month=1, day=1)
         range_end = range_start.replace(year=range_start.year + 1)
         period_label = str(selected_date.year)
-        bucket_expression = "MONTH(OrderDate)"
+        bucket_expression = "EXTRACT(MONTH FROM OrderDate)"
         bucket_numbers = range(1, 13)
         chart_labels = [f"{month:02d}" for month in bucket_numbers]
 

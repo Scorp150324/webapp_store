@@ -4,11 +4,10 @@ import secrets
 
 import bcrypt
 from flask import abort, jsonify, request, session
-from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from api import api_bp
-from database import engine
+from database import engine, text
 
 logger = logging.getLogger(__name__)
 

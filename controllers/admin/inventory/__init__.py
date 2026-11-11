@@ -3,8 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from flask import flash, request, session
-from sqlalchemy import text
-
+from database import text
 from controllers.admin.common import DashboardInputError, form_decimal, form_int, form_value
 
 
@@ -20,7 +19,7 @@ def handle_action(connection, action):
                 "WHERE ProductID=:id AND IsDeleted=0 FOR UPDATE"
             ),
             {"id": product_id},
-        ).first()
+        ).mappings().first()
         if not product:
             raise DashboardInputError("Không tìm thấy sản phẩm cần nhập.")
         serial_numbers = [
@@ -37,11 +36,12 @@ def handle_action(connection, action):
         if any(len(serial) > 100 for serial in serial_numbers):
             raise DashboardInputError("Mỗi số serial tối đa 100 ký tự.")
         total = import_price * quantity
-        note = connection.execute(
+        note_id = connection.execute(
             text(
                 "INSERT INTO Inbound_Notes "
                 "(SupplierID, CreatedBy, TotalAmount, Status, Notes) "
-                "VALUES (:supplier_id, :created_by, :total, 'COMPLETED', :notes)"
+                "VALUES (:supplier_id, :created_by, :total, 'COMPLETED', :notes) "
+                "RETURNING InboundID"
             ),
             {
                 "supplier_id": supplier_id,
@@ -49,20 +49,21 @@ def handle_action(connection, action):
                 "total": total,
                 "notes": form_value("notes") or None,
             },
-        )
-        detail = connection.execute(
+        ).scalar_one()
+        detail_id = connection.execute(
             text(
                 "INSERT INTO Inbound_Details "
                 "(InboundID, ProductID, Quantity, ImportPrice) "
-                "VALUES (:inbound_id, :product_id, :quantity, :price)"
+                "VALUES (:inbound_id, :product_id, :quantity, :price) "
+                "RETURNING InboundDetailID"
             ),
             {
-                "inbound_id": note.lastrowid,
+                "inbound_id": note_id,
                 "product_id": product_id,
                 "quantity": quantity,
                 "price": import_price,
             },
-        )
+        ).scalar_one()
         for serial_number in serial_numbers:
             connection.execute(
                 text(
@@ -73,7 +74,7 @@ def handle_action(connection, action):
                 {
                     "product_id": product_id,
                     "serial_number": serial_number,
-                    "detail_id": detail.lastrowid,
+                    "detail_id": detail_id,
                 },
             )
         connection.execute(
@@ -83,7 +84,7 @@ def handle_action(connection, action):
             ),
             {"quantity": quantity, "price": import_price, "product_id": product_id},
         )
-        flash(f"Đã tạo phiếu nhập #{note.lastrowid}.", "success")
+        flash(f"Đã tạo phiếu nhập #{note_id}.", "success")
         return
 
     if action == "outbound-create":
@@ -122,13 +123,13 @@ def handle_action(connection, action):
 
         amount = Decimal(product["SellingPrice"]) * quantity
         order_code = f"HD{datetime.now():%Y%m%d%H%M%S}{secrets.token_hex(2).upper()}"
-        order = connection.execute(
+        order_id = connection.execute(
             text(
                 "INSERT INTO Orders "
                 "(OrderCode, CustomerID, EmployeeID, SubTotal, DiscountAmount, "
                 "TotalAmount, OrderStatus, Notes) "
                 "VALUES (:code, :customer_id, :employee_id, :amount, 0, "
-                ":amount, 'PAID', :notes)"
+                ":amount, 'PAID', :notes) RETURNING OrderID"
             ),
             {
                 "code": order_code,
@@ -137,21 +138,22 @@ def handle_action(connection, action):
                 "amount": amount,
                 "notes": form_value("notes") or None,
             },
-        )
-        order_detail = connection.execute(
+        ).scalar_one()
+        order_detail_id = connection.execute(
             text(
                 "INSERT INTO Order_Details "
                 "(OrderID, ProductID, Quantity, UnitPrice, TotalPrice) "
-                "VALUES (:order_id, :product_id, :quantity, :price, :total)"
+                "VALUES (:order_id, :product_id, :quantity, :price, :total) "
+                "RETURNING OrderDetailID"
             ),
             {
-                "order_id": order.lastrowid,
+                "order_id": order_id,
                 "product_id": product_id,
                 "quantity": quantity,
                 "price": product["SellingPrice"],
                 "total": amount,
             },
-        )
+        ).scalar_one()
         for serial in available_serials:
             connection.execute(
                 text(
@@ -159,7 +161,7 @@ def handle_action(connection, action):
                     "WHERE SerialID=:serial_id AND Status='AVAILABLE'"
                 ),
                 {
-                    "detail_id": order_detail.lastrowid,
+                    "detail_id": order_detail_id,
                     "serial_id": serial["SerialID"],
                 },
             )
@@ -177,7 +179,7 @@ def handle_action(connection, action):
                 "VALUES (:order_id, :amount, :amount, :method, 'PAID')"
             ),
             {
-                "order_id": order.lastrowid,
+                "order_id": order_id,
                 "amount": amount,
                 "method": payment_method,
             },
