@@ -10,7 +10,7 @@ const legacyViewNames = {
     "employee-section": "employees",
     "customer-section": "customers",
     "product-section": "products",
-    "inbound-section": "inventory",
+    "inventory-section": "inbound",
 };
 
 function viewNameFromHash() {

@@ -18,6 +18,7 @@ def guard_dashboard():
 
 from controllers.admin.actions import action
 from controllers.admin.overview import home
+from controllers.admin.invoices import export_invoice_excel, export_invoice_pdf
 
 dashboard_bp.add_url_rule("/dashboard", endpoint="home", view_func=home)
 dashboard_bp.add_url_rule(
@@ -25,4 +26,14 @@ dashboard_bp.add_url_rule(
     endpoint="action",
     view_func=action,
     methods=["POST"],
+)
+dashboard_bp.add_url_rule(
+    "/dashboard/invoice/<int:order_id>/excel",
+    endpoint="invoice_excel",
+    view_func=export_invoice_excel,
+)
+dashboard_bp.add_url_rule(
+    "/dashboard/invoice/<int:order_id>/pdf",
+    endpoint="invoice_pdf",
+    view_func=export_invoice_pdf,
 )

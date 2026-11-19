@@ -14,7 +14,13 @@ import bcrypt
 from flask import Blueprint, current_app, flash, redirect, render_template, request, send_from_directory, session, url_for
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from database import engine, insert_id, text
+from database import (
+    engine,
+    insert_id,
+    product_search_pattern,
+    product_search_subquery,
+    text,
+)
 
 logger = logging.getLogger(__name__)
 site_bp = Blueprint("site", __name__)
@@ -216,13 +222,8 @@ def index():
             )
             parameters = {}
             if search:
-                query += (
-                    " AND (p.ProductName ILIKE :search "
-                    "OR p.SKU ILIKE :search "
-                    "OR p.Barcode ILIKE :search "
-                    "OR p.Specifications ILIKE :search)"
-                )
-                parameters["search"] = f"%{search}%"
+                query += f" AND p.ProductID IN ({product_search_subquery()})"
+                parameters["search"] = product_search_pattern(search)
             if selected_category:
                 if category_ids:
                     category_parameters = []

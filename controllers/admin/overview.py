@@ -28,7 +28,8 @@ def home():
                     "(SELECT COALESCE(SUM(TotalAmount), 0) FROM Orders "
                     "WHERE OrderStatus IN ('PAID', 'COMPLETED', 'SHIPPED')) AS sales_total, "
                     "(SELECT COUNT(*) FROM Orders "
-                    "WHERE OrderDate >= CURRENT_DATE) AS orders_today"
+                    "WHERE OrderDate >= CURRENT_DATE "
+                    "AND COALESCE(OrderStatus, '') <> 'DELETED') AS orders_today"
                 )
             ).mappings().one()
             roles = connection.execute(
@@ -82,21 +83,25 @@ def home():
             ).mappings().all()
             inbound_notes = connection.execute(
                 text(
-                    "SELECT i.InboundID, i.ImportDate, i.TotalAmount, i.Status, "
+                    "SELECT i.InboundID, i.SupplierID, i.ImportDate, i.TotalAmount, "
+                    "i.Status, i.Notes, "
                     "s.SupplierName, u.FullName AS EmployeeName "
                     "FROM Inbound_Notes AS i "
                     "LEFT JOIN Suppliers AS s ON s.SupplierID = i.SupplierID "
                     "LEFT JOIN Users AS u ON u.UserID = i.CreatedBy "
+                    "WHERE COALESCE(i.Status, '') <> 'DELETED' "
                     "ORDER BY i.ImportDate DESC LIMIT 50"
                 )
             ).mappings().all()
             orders = connection.execute(
                 text(
                     "SELECT o.OrderID, o.OrderCode, o.OrderDate, o.TotalAmount, "
-                    "o.OrderStatus, c.FullName AS CustomerName, u.FullName AS EmployeeName "
+                    "o.OrderStatus, o.Notes, c.FullName AS CustomerName, "
+                    "u.FullName AS EmployeeName "
                     "FROM Orders AS o "
                     "LEFT JOIN Customers AS c ON c.CustomerID = o.CustomerID "
                     "LEFT JOIN Users AS u ON u.UserID = o.EmployeeID "
+                    "WHERE COALESCE(o.OrderStatus, '') <> 'DELETED' "
                     "ORDER BY o.OrderDate DESC LIMIT 50"
                 )
             ).mappings().all()

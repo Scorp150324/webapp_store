@@ -27,18 +27,29 @@ the defaults in [`.env.example`](./.env.example).
    wait until it is running.
 3. Open Laragon's **HeidiSQL**, connect to `127.0.0.1:3306` as `root` (the
    default Laragon password is empty), open
-   [`thietbiphancung.sql`](./thietbiphancung.sql), and execute it. **This file
-   drops and recreates tables**, so run it only against a local database you
-   are willing to reset.
+   [`thietbiphancung.sql`](./thietbiphancung.sql), and execute it. The dump
+   contains the schema, indexes, and sample data (100 rows per table).
+   **Importing it drops and recreates tables**, so use only a local database
+   you are willing to reset.
 4. If you set a MySQL root password, put the matching `DATABASE_URL` in `.env`;
    the example for Laragon's default is in [`.env.example`](./.env.example).
-5. Start the app:
+5. To top up any missing sample rows and ensure product-search indexes without
+   deleting existing data, optionally run:
+
+   ```powershell
+   python -m scripts.seed_sample_data
+   ```
+
+   This is local-MySQL-only and safe to rerun. Product search matches from the
+   beginning of the name, SKU, barcode, or specifications so the B-tree
+   indexes can be used.
+6. Start the app:
 
    ```powershell
    python app.py
    ```
 
-5. Open [http://127.0.0.1:5000](http://127.0.0.1:5000). Press `Ctrl+C` in
+7. Open [http://127.0.0.1:5000](http://127.0.0.1:5000). Press `Ctrl+C` in
    PowerShell to stop it.
 
 The default server address is `127.0.0.1`, so the app is available only on
@@ -51,10 +62,9 @@ Supabase provides PostgreSQL, not MySQL. This Flask application connects to
 PostgreSQL using SQLAlchemy and Psycopg; the database credential stays on the
 server and is never exposed to browser code.
 
-1. In Supabase, open **SQL Editor** and run
-   [`migrations/001_supabase_postgres.sql`](./migrations/001_supabase_postgres.sql).
-   It creates the tables and enables RLS. It does not import data from an
-   existing MySQL database.
+1. In Supabase, open **SQL Editor** and run the Supabase PostgreSQL section in
+   [`thietbiphancung.sql`](./thietbiphancung.sql). It creates the tables and
+   enables RLS. It does not import data from an existing MySQL database.
 2. In the Supabase **Connect** dialog, copy the **Transaction pooler** URI
    (port `6543`). Do not construct the pooler hostname or username manually.
 3. Import this repository into Vercel. Flask is detected from the root

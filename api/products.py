@@ -4,7 +4,7 @@ from flask import abort, jsonify, request
 from sqlalchemy.exc import SQLAlchemyError
 
 from api import api_bp
-from database import engine, text
+from database import engine, product_search_pattern, product_search_subquery, text
 
 
 def _serialize_product(row):
@@ -29,11 +29,8 @@ def list_products():
     where_clause = "WHERE p.IsDeleted = 0"
     parameters = {"limit": per_page, "offset": (page - 1) * per_page}
     if search:
-        where_clause += (
-            " AND (p.ProductName ILIKE :search OR p.SKU ILIKE :search "
-            "OR p.Barcode ILIKE :search OR p.Specifications ILIKE :search)"
-        )
-        parameters["search"] = f"%{search}%"
+        where_clause += f" AND p.ProductID IN ({product_search_subquery()})"
+        parameters["search"] = product_search_pattern(search)
 
     try:
         with engine.connect() as connection:

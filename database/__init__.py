@@ -65,6 +65,27 @@ def insert_id(connection, statement, parameters, returning_column):
     ).scalar_one()
 
 
+def product_search_subquery():
+    columns = ("ProductName", "SKU", "Barcode", "Specifications")
+    if engine.dialect.name == "mysql":
+        expressions = list(columns)
+    else:
+        expressions = [f"lower({column})" for column in columns]
+    branches = [
+        "SELECT ProductID FROM Products "
+        f"WHERE IsDeleted = 0 AND {expression} LIKE :search ESCAPE '='"
+        for expression in expressions
+    ]
+    return " UNION ".join(branches)
+
+
+def product_search_pattern(value):
+    escaped = value.replace("=", "==").replace("%", "=%").replace("_", "=_")
+    if engine.dialect.name != "mysql":
+        escaped = escaped.lower()
+    return f"{escaped}%"
+
+
 database_url = os.environ.get("DATABASE_URL")
 is_production = (
     os.environ.get("FLASK_ENV", "").strip().lower() == "production"

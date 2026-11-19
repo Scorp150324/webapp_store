@@ -24,7 +24,11 @@ ACTION_HANDLERS = {
     "product-delete": handle_product_action,
     "product-restore": handle_product_action,
     "inbound-create": handle_inventory_action,
+    "inbound-update": handle_inventory_action,
+    "inbound-delete": handle_inventory_action,
     "outbound-create": handle_inventory_action,
+    "outbound-update": handle_inventory_action,
+    "outbound-delete": handle_inventory_action,
 }
 
 
@@ -47,4 +51,11 @@ def action(action):
         logger.exception("Không thể hoàn tất thao tác dashboard: %s", action)
         flash("Không thể hoàn tất thao tác. Kiểm tra cơ sở dữ liệu và thử lại.", "error")
 
-    return redirect(url_for("dashboard.home") + f"#{action.split('-')[0]}-section")
+    section = (
+        "inbound-section"
+        if action.startswith("inbound-")
+        else "outbound-section"
+        if action.startswith("outbound-")
+        else f"{action.split('-')[0]}-section"
+    )
+    return redirect(url_for("dashboard.home") + f"#{section}")
