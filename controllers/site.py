@@ -14,7 +14,7 @@ import bcrypt
 from flask import Blueprint, current_app, flash, redirect, render_template, request, send_from_directory, session, url_for
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from database import engine, text
+from database import engine, insert_id, text
 
 logger = logging.getLogger(__name__)
 site_bp = Blueprint("site", __name__)
@@ -433,20 +433,18 @@ def forgot_password():
                                 ),
                                 {"customer_id": customer["CustomerID"]},
                             )
-                            result = connection.execute(
-                                text(
-                                    "INSERT INTO Password_Reset_Tokens "
-                                    "(CustomerID, TokenHash, ExpiresAt, FailedAttempts) "
-                                    "VALUES (:customer_id, :token_hash, "
-                                    f"CURRENT_TIMESTAMP + INTERVAL '{PASSWORD_RESET_OTP_TTL_MINUTES} minutes', 0) "
-                                    "RETURNING PasswordResetID"
-                                ),
+                            reset_id = insert_id(
+                                connection,
+                                "INSERT INTO Password_Reset_Tokens "
+                                "(CustomerID, TokenHash, ExpiresAt, FailedAttempts) "
+                                "VALUES (:customer_id, :token_hash, "
+                                f"CURRENT_TIMESTAMP + INTERVAL '{PASSWORD_RESET_OTP_TTL_MINUTES} minutes', 0)",
                                 {
                                     "customer_id": customer["CustomerID"],
                                     "token_hash": token_hash,
                                 },
+                                "PasswordResetID",
                             )
-                            reset_id = result.scalar_one()
                             destination = (
                                 customer["Email"] if email_identity else customer["Phone"]
                             )

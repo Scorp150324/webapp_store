@@ -32,8 +32,37 @@ def _quote_legacy_identifiers(statement):
     return _IDENTIFIER_TOKEN.sub(quote, statement)
 
 
+def _adapt_statement(statement, dialect_name):
+    if dialect_name == "mysql":
+        statement = re.sub(r"\bILIKE\b", "LIKE", statement, flags=re.IGNORECASE)
+
+        def replace_interval(match):
+            operation = "DATE_SUB" if match.group(1) == "-" else "DATE_ADD"
+            unit = match.group(3).upper().rstrip("S")
+            return f"{operation}(CURRENT_TIMESTAMP, INTERVAL {match.group(2)} {unit})"
+
+        return re.sub(
+            r"\bCURRENT_TIMESTAMP\s*([+-])\s*INTERVAL\s*'(\d+)\s+(days?|hours?|minutes?)'",
+            replace_interval,
+            statement,
+            flags=re.IGNORECASE,
+        )
+    return _quote_legacy_identifiers(statement)
+
+
 def text(statement):
-    return sqlalchemy_text(_quote_legacy_identifiers(statement))
+    return sqlalchemy_text(_adapt_statement(statement, engine.dialect.name))
+
+
+def insert_id(connection, statement, parameters, returning_column):
+    if engine.dialect.name == "mysql":
+        result = connection.execute(text(statement), parameters)
+        if result.lastrowid is None:
+            raise RuntimeError("The MySQL insert did not return an auto-increment ID")
+        return result.lastrowid
+    return connection.execute(
+        text(f"{statement} RETURNING {returning_column}"), parameters
+    ).scalar_one()
 
 
 database_url = os.environ.get("DATABASE_URL")
@@ -45,11 +74,12 @@ if not database_url:
     if is_production:
         raise RuntimeError("DATABASE_URL must be configured in production")
     database_url = URL.create(
-        "postgresql+psycopg",
-        username="postgres",
+        "mysql+pymysql",
+        username="root",
         host="localhost",
-        port=5432,
+        port=3306,
         database="store_management_db",
+        query={"charset": "utf8mb4"},
     )
 else:
     if database_url.startswith("postgres://"):
@@ -57,19 +87,28 @@ else:
     database_url = make_url(database_url)
     if database_url.drivername == "postgresql":
         database_url = database_url.set(drivername="postgresql+psycopg")
-    if database_url.drivername != "postgresql+psycopg":
-        raise RuntimeError("DATABASE_URL must use PostgreSQL with the psycopg driver")
-    if is_production:
+    elif database_url.drivername == "mysql":
+        database_url = database_url.set(drivername="mysql+pymysql")
+    if database_url.drivername not in {"postgresql+psycopg", "mysql+pymysql"}:
+        raise RuntimeError(
+            "DATABASE_URL must use PostgreSQL with psycopg or MySQL with PyMySQL"
+        )
+    if is_production and database_url.drivername == "postgresql+psycopg":
         query = dict(database_url.query)
         query["sslmode"] = "require"
         database_url = database_url.set(query=query)
 
+connect_args = (
+    {"prepare_threshold": None}
+    if database_url.drivername == "postgresql+psycopg"
+    else {"connect_timeout": 5}
+)
 engine = create_engine(
     database_url,
     pool_size=1,
     max_overflow=0,
     pool_pre_ping=True,
-    connect_args={"prepare_threshold": None},
+    connect_args=connect_args,
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

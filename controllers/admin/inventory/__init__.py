@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from flask import flash, request, session
-from database import text
+from database import insert_id, text
 from controllers.admin.common import DashboardInputError, form_decimal, form_int, form_value
 
 
@@ -36,34 +36,32 @@ def handle_action(connection, action):
         if any(len(serial) > 100 for serial in serial_numbers):
             raise DashboardInputError("Mỗi số serial tối đa 100 ký tự.")
         total = import_price * quantity
-        note_id = connection.execute(
-            text(
-                "INSERT INTO Inbound_Notes "
-                "(SupplierID, CreatedBy, TotalAmount, Status, Notes) "
-                "VALUES (:supplier_id, :created_by, :total, 'COMPLETED', :notes) "
-                "RETURNING InboundID"
-            ),
+        note_id = insert_id(
+            connection,
+            "INSERT INTO Inbound_Notes "
+            "(SupplierID, CreatedBy, TotalAmount, Status, Notes) "
+            "VALUES (:supplier_id, :created_by, :total, 'COMPLETED', :notes)",
             {
                 "supplier_id": supplier_id,
                 "created_by": session["user_id"],
                 "total": total,
                 "notes": form_value("notes") or None,
             },
-        ).scalar_one()
-        detail_id = connection.execute(
-            text(
-                "INSERT INTO Inbound_Details "
-                "(InboundID, ProductID, Quantity, ImportPrice) "
-                "VALUES (:inbound_id, :product_id, :quantity, :price) "
-                "RETURNING InboundDetailID"
-            ),
+            "InboundID",
+        )
+        detail_id = insert_id(
+            connection,
+            "INSERT INTO Inbound_Details "
+            "(InboundID, ProductID, Quantity, ImportPrice) "
+            "VALUES (:inbound_id, :product_id, :quantity, :price)",
             {
                 "inbound_id": note_id,
                 "product_id": product_id,
                 "quantity": quantity,
                 "price": import_price,
             },
-        ).scalar_one()
+            "InboundDetailID",
+        )
         for serial_number in serial_numbers:
             connection.execute(
                 text(
@@ -123,14 +121,13 @@ def handle_action(connection, action):
 
         amount = Decimal(product["SellingPrice"]) * quantity
         order_code = f"HD{datetime.now():%Y%m%d%H%M%S}{secrets.token_hex(2).upper()}"
-        order_id = connection.execute(
-            text(
-                "INSERT INTO Orders "
-                "(OrderCode, CustomerID, EmployeeID, SubTotal, DiscountAmount, "
-                "TotalAmount, OrderStatus, Notes) "
-                "VALUES (:code, :customer_id, :employee_id, :amount, 0, "
-                ":amount, 'PAID', :notes) RETURNING OrderID"
-            ),
+        order_id = insert_id(
+            connection,
+            "INSERT INTO Orders "
+            "(OrderCode, CustomerID, EmployeeID, SubTotal, DiscountAmount, "
+            "TotalAmount, OrderStatus, Notes) "
+            "VALUES (:code, :customer_id, :employee_id, :amount, 0, "
+            ":amount, 'PAID', :notes)",
             {
                 "code": order_code,
                 "customer_id": customer_id,
@@ -138,14 +135,13 @@ def handle_action(connection, action):
                 "amount": amount,
                 "notes": form_value("notes") or None,
             },
-        ).scalar_one()
-        order_detail_id = connection.execute(
-            text(
-                "INSERT INTO Order_Details "
-                "(OrderID, ProductID, Quantity, UnitPrice, TotalPrice) "
-                "VALUES (:order_id, :product_id, :quantity, :price, :total) "
-                "RETURNING OrderDetailID"
-            ),
+            "OrderID",
+        )
+        order_detail_id = insert_id(
+            connection,
+            "INSERT INTO Order_Details "
+            "(OrderID, ProductID, Quantity, UnitPrice, TotalPrice) "
+            "VALUES (:order_id, :product_id, :quantity, :price, :total)",
             {
                 "order_id": order_id,
                 "product_id": product_id,
@@ -153,7 +149,8 @@ def handle_action(connection, action):
                 "price": product["SellingPrice"],
                 "total": amount,
             },
-        ).scalar_one()
+            "OrderDetailID",
+        )
         for serial in available_serials:
             connection.execute(
                 text(
