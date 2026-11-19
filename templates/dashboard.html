@@ -69,6 +69,12 @@
                 <article><span>Đơn hàng hợp lệ</span><strong>{{ period_order_count }}</strong></article>
                 <small>Chỉ tính đơn PAID, COMPLETED và SHIPPED.</small>
             </div>
+            <div class="report-export-actions">
+                <a class="report-export-button report-export-excel"
+                   href="{{ url_for('dashboard.statistics_excel', period=period, date=selected_date) }}">Xuất Excel</a>
+                <a class="report-export-button report-export-pdf"
+                   href="{{ url_for('dashboard.statistics_pdf', period=period, date=selected_date) }}">Xuất PDF</a>
+            </div>
             <div class="analytics-charts">
                 <article class="chart-card">
                     <h4>Biến động doanh thu</h4>
@@ -137,6 +143,20 @@
                     </tr>{% else %}<tr><td colspan="5" class="table-empty">Chưa có nhân viên.</td></tr>{% endfor %}</tbody>
                 </table>
             </div>
+            {% if session.get("role_id") == 1 %}
+            <details class="dashboard-create">
+                <summary>Nhân viên đã khóa ({{ hidden_employees|length }})</summary>
+                <div class="dashboard-table-wrap"><table class="dashboard-table">
+                    <thead><tr><th>Nhân viên</th><th>Tài khoản</th><th>Vai trò</th><th>Liên hệ</th><th>Ngày khóa</th><th>Thao tác</th></tr></thead>
+                    <tbody>{% for employee in hidden_employees %}<tr>
+                        <td>{{ employee.FullName }}</td><td>{{ employee.Username }}</td><td>{{ employee.RoleName or "Chưa phân quyền" }}</td>
+                        <td>{{ employee.Email or "—" }}<small class="cell-sub">{{ employee.Phone or "" }}</small></td>
+                        <td>{{ employee.DeletedAt or "—" }}</td>
+                        <td class="table-actions"><form method="post" action="{{ url_for('dashboard.action', action='employee-restore') }}" onsubmit="return confirm('Khôi phục tài khoản nhân viên này?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ employee.UserID }}"><button class="action-button action-button-save" type="submit">Khôi phục</button></form></td>
+                    </tr>{% else %}<tr><td colspan="6" class="table-empty">Không có nhân viên đã khóa.</td></tr>{% endfor %}</tbody>
+                </table></div>
+            </details>
+            {% endif %}
         </section>
 
         <section class="dashboard-panel" id="customers-section" data-dashboard-view="customers">
@@ -163,9 +183,23 @@
                         <label>Email<input type="email" name="email" value="{{ customer.Email or '' }}" maxlength="100"></label><label>Mật khẩu mới<input type="password" name="password" minlength="8" maxlength="72" placeholder="Để trống nếu không đổi"></label>
                         <button class="action-button action-button-save" type="submit">Lưu thay đổi</button>
                     </form></details>
-                    <form method="post" action="{{ url_for('dashboard.action', action='customer-delete') }}" onsubmit="return confirm('Ẩn khách hàng này?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ customer.CustomerID }}"><button class="action-button action-button-delete" type="submit">Ẩn</button></form></div></td>
+                    <form method="post" action="{{ url_for('dashboard.action', action='customer-delete') }}" onsubmit="return confirm('Khóa khách hàng này?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ customer.CustomerID }}"><button class="action-button action-button-delete" type="submit">Khóa</button></form></div></td>
                 </tr>{% else %}<tr><td colspan="5" class="table-empty">Chưa có khách hàng.</td></tr>{% endfor %}</tbody>
             </table></div>
+            {% if session.get("role_id") == 1 %}
+            <details class="dashboard-create">
+                <summary>Khách hàng đã khóa ({{ hidden_customers|length }})</summary>
+                <div class="dashboard-table-wrap"><table class="dashboard-table">
+                    <thead><tr><th>Khách hàng</th><th>Tài khoản</th><th>Liên hệ</th><th>Ngày khóa</th><th>Thao tác</th></tr></thead>
+                    <tbody>{% for customer in hidden_customers %}<tr>
+                        <td>{{ customer.FullName }}</td><td>{{ customer.Username or "—" }}</td>
+                        <td>{{ customer.Phone }}<small class="cell-sub">{{ customer.Email or "" }}</small></td>
+                        <td>{{ customer.DeletedAt or "—" }}</td>
+                        <td class="table-actions"><form method="post" action="{{ url_for('dashboard.action', action='customer-restore') }}" onsubmit="return confirm('Khôi phục khách hàng này?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ customer.CustomerID }}"><button class="action-button action-button-save" type="submit">Khôi phục</button></form></td>
+                    </tr>{% else %}<tr><td colspan="5" class="table-empty">Không có khách hàng đã khóa.</td></tr>{% endfor %}</tbody>
+                </table></div>
+            </details>
+            {% endif %}
         </section>
 
         <section class="dashboard-panel" id="products-section" data-dashboard-view="products">
@@ -196,13 +230,13 @@
                         <label>Bảo hành<input type="number" name="warranty_months" value="{{ product.WarrantyMonths }}" min="0" required></label><label>URL ảnh<input type="text" name="main_image" value="{{ product.MainImage or '' }}" maxlength="500"></label><label>Ảnh mới (tối đa 5 MB)<input type="file" name="main_image_file" accept="image/gif,image/jpeg,image/png,image/webp"></label>
                         <label class="wide-field">Thông số<textarea name="specifications" rows="2">{{ product.Specifications or '' }}</textarea></label><label class="check-field"><input type="checkbox" name="is_has_serial" value="1" {% if product.IsHasSerial %}checked{% endif %}> Quản lý serial</label><button type="submit">Lưu thay đổi</button>
                     </form></details>
-                    <form method="post" action="{{ url_for('dashboard.action', action='product-delete') }}" onsubmit="return confirm('Ẩn sản phẩm này?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ product.ProductID }}"><button class="action-button action-button-delete" type="submit">Xóa</button></form></div></td>
+                    <form method="post" action="{{ url_for('dashboard.action', action='product-delete') }}" onsubmit="return confirm('Xóa sản phẩm này?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ product.ProductID }}"><button class="action-button action-button-delete" type="submit">Xóa</button></form></div></td>
                 </tr>{% else %}<tr><td colspan="6" class="table-empty">Chưa có sản phẩm.</td></tr>{% endfor %}</tbody>
             </table></div>
             <details class="dashboard-create">
-                <summary>Sản phẩm đã ẩn ({{ hidden_products|length }})</summary>
+                <summary>Sản phẩm đã xóa ({{ hidden_products|length }})</summary>
                 <div class="dashboard-table-wrap"><table class="dashboard-table">
-                    <thead><tr><th>Sản phẩm</th><th>Danh mục</th><th>SKU</th><th>Tồn kho</th><th>Giá bán</th><th>Ngày ẩn</th><th>Thao tác</th></tr></thead>
+                    <thead><tr><th>Sản phẩm</th><th>Danh mục</th><th>SKU</th><th>Tồn kho</th><th>Giá bán</th><th>Ngày xóa</th><th>Thao tác</th></tr></thead>
                     <tbody>{% for product in hidden_products %}<tr>
                         <td>{{ product.ProductName }}<small class="cell-sub">{{ product.SupplierName or "" }}</small></td>
                         <td>{{ product.CategoryName or "—" }}</td><td>{{ product.SKU }}</td>
@@ -215,7 +249,7 @@
                                 <button type="submit">Khôi phục</button>
                             </form>
                         </td>
-                    </tr>{% else %}<tr><td colspan="7" class="table-empty">Không có sản phẩm nào đang ẩn.</td></tr>{% endfor %}</tbody>
+                    </tr>{% else %}<tr><td colspan="7" class="table-empty">Không có sản phẩm nào đã xóa.</td></tr>{% endfor %}</tbody>
                 </table></div>
             </details>
         </section>
@@ -232,6 +266,17 @@
                     <label>Ghi chú<textarea name="notes" rows="2"></textarea></label><button type="submit">Tạo phiếu nhập</button>
                 </form>
                 <div class="inventory-history"><div><h4>Phiếu nhập gần đây</h4><div class="dashboard-table-wrap"><table class="dashboard-table"><thead><tr><th>Mã phiếu</th><th>Ngày</th><th>Nhà cung cấp</th><th>Tổng tiền</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>{% for note in inbound_notes %}<tr><td>#{{ note.InboundID }}</td><td>{{ note.ImportDate.strftime("%d/%m/%Y %H:%M") if note.ImportDate else "—" }}</td><td>{{ note.SupplierName or "—" }}</td><td>{{ "{:,.0f}".format(note.TotalAmount) }} ₫</td><td>{{ transaction_status_labels.get(note.Status or "COMPLETED", "Không xác định") }}</td><td><div class="transaction-actions"><details><summary class="action-button action-button-edit">Sửa</summary><form class="transaction-edit-form" method="post" action="{{ url_for('dashboard.action', action='inbound-update') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ note.InboundID }}"><label>Nhà cung cấp<select name="supplier_id"><option value="">Không chọn</option>{% for supplier in suppliers %}<option value="{{ supplier.SupplierID }}" {% if supplier.SupplierID == note.SupplierID %}selected{% endif %}>{{ supplier.SupplierName }}</option>{% endfor %}</select></label><label>Trạng thái<select name="status"><option value="DRAFT" {% if note.Status == "DRAFT" %}selected{% endif %}>Nháp</option><option value="COMPLETED" {% if note.Status == "COMPLETED" %}selected{% endif %}>Hoàn tất</option><option value="CANCELLED" {% if note.Status == "CANCELLED" %}selected{% endif %}>Đã hủy</option></select></label><label>Ghi chú<textarea name="notes" rows="2">{{ note.Notes or "" }}</textarea></label><button class="action-button action-button-save" type="submit">Lưu cập nhật</button></form></details><form method="post" action="{{ url_for('dashboard.action', action='inbound-delete') }}" onsubmit="return confirm('Ẩn phiếu nhập này? Tồn kho sẽ không thay đổi.');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ note.InboundID }}"><button class="action-button action-button-delete" type="submit">Xóa</button></form></div></td></tr>{% else %}<tr><td colspan="6" class="table-empty">Chưa có phiếu nhập.</td></tr>{% endfor %}</tbody></table></div></div></div>
+                <details class="dashboard-create">
+                    <summary>Phiếu nhập đã xóa ({{ hidden_inbound_notes|length }})</summary>
+                    <div class="dashboard-table-wrap"><table class="dashboard-table">
+                        <thead><tr><th>Mã phiếu</th><th>Ngày</th><th>Nhà cung cấp</th><th>Tổng tiền</th><th>Thao tác</th></tr></thead>
+                        <tbody>{% for note in hidden_inbound_notes %}<tr>
+                            <td>#{{ note.InboundID }}</td><td>{{ note.ImportDate.strftime("%d/%m/%Y %H:%M") if note.ImportDate else "—" }}</td>
+                            <td>{{ note.SupplierName or "—" }}</td><td>{{ "{:,.0f}".format(note.TotalAmount) }} ₫</td>
+                            <td><form method="post" action="{{ url_for('dashboard.action', action='inbound-restore') }}" onsubmit="return confirm('Khôi phục phiếu nhập này? Tồn kho sẽ không thay đổi.');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ note.InboundID }}"><button class="action-button action-button-save" type="submit">Khôi phục</button></form></td>
+                        </tr>{% else %}<tr><td colspan="5" class="table-empty">Không có phiếu nhập đã xóa.</td></tr>{% endfor %}</tbody>
+                    </table></div>
+                </details>
             </div>
         </section>
 
@@ -246,6 +291,17 @@
                     <label>Ghi chú<textarea name="notes" rows="2"></textarea></label><button type="submit">Tạo đơn xuất hàng</button>
                 </form>
                 <div><h4>Đơn xuất gần đây</h4><div class="dashboard-table-wrap"><table class="dashboard-table"><thead><tr><th>Mã đơn</th><th>Ngày</th><th>Khách hàng</th><th>Tổng tiền</th><th>Trạng thái</th><th>Hóa đơn</th><th>Thao tác</th></tr></thead><tbody>{% for order in orders %}<tr><td>{{ order.OrderCode }}</td><td>{{ order.OrderDate.strftime("%d/%m/%Y %H:%M") if order.OrderDate else "—" }}</td><td>{{ order.CustomerName or "Khách lẻ" }}</td><td>{{ "{:,.0f}".format(order.TotalAmount) }} ₫</td><td>{{ transaction_status_labels.get(order.OrderStatus or "PENDING", "Không xác định") }}</td><td><div class="invoice-download-actions"><a class="invoice-download-button invoice-download-excel" href="{{ url_for('dashboard.invoice_excel', order_id=order.OrderID) }}" title="Tải hóa đơn Excel">Excel</a><a class="invoice-download-button invoice-download-pdf" href="{{ url_for('dashboard.invoice_pdf', order_id=order.OrderID) }}" title="Tải hóa đơn PDF">PDF</a></div></td><td><div class="transaction-actions"><details><summary class="action-button action-button-edit">Sửa</summary><form class="transaction-edit-form" method="post" action="{{ url_for('dashboard.action', action='outbound-update') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ order.OrderID }}"><label>Trạng thái<select name="status"><option value="PENDING" {% if order.OrderStatus == "PENDING" %}selected{% endif %}>Chờ xử lý</option><option value="PAID" {% if order.OrderStatus == "PAID" %}selected{% endif %}>Đã thanh toán</option><option value="SHIPPED" {% if order.OrderStatus == "SHIPPED" %}selected{% endif %}>Đã giao hàng</option><option value="COMPLETED" {% if order.OrderStatus == "COMPLETED" %}selected{% endif %}>Hoàn tất</option><option value="CANCELLED" {% if order.OrderStatus == "CANCELLED" %}selected{% endif %}>Đã hủy</option></select></label><label>Ghi chú<textarea name="notes" rows="2">{{ order.Notes or "" }}</textarea></label><button class="action-button action-button-save" type="submit">Lưu cập nhật</button></form></details><form method="post" action="{{ url_for('dashboard.action', action='outbound-delete') }}" onsubmit="return confirm('Ẩn đơn xuất này? Tồn kho và thanh toán sẽ không thay đổi.');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ order.OrderID }}"><button class="action-button action-button-delete" type="submit">Xóa</button></form></div></td></tr>{% else %}<tr><td colspan="7" class="table-empty">Chưa có đơn hàng.</td></tr>{% endfor %}</tbody></table></div></div>
+                <details class="dashboard-create">
+                    <summary>Đơn xuất đã xóa ({{ hidden_orders|length }})</summary>
+                    <div class="dashboard-table-wrap"><table class="dashboard-table">
+                        <thead><tr><th>Mã đơn</th><th>Ngày</th><th>Khách hàng</th><th>Tổng tiền</th><th>Thao tác</th></tr></thead>
+                        <tbody>{% for order in hidden_orders %}<tr>
+                            <td>{{ order.OrderCode }}</td><td>{{ order.OrderDate.strftime("%d/%m/%Y %H:%M") if order.OrderDate else "—" }}</td>
+                            <td>{{ order.CustomerName or "Khách lẻ" }}</td><td>{{ "{:,.0f}".format(order.TotalAmount) }} ₫</td>
+                            <td><form method="post" action="{{ url_for('dashboard.action', action='outbound-restore') }}" onsubmit="return confirm('Khôi phục đơn xuất này? Tồn kho và thanh toán sẽ không thay đổi.');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ order.OrderID }}"><button class="action-button action-button-save" type="submit">Khôi phục</button></form></td>
+                        </tr>{% else %}<tr><td colspan="5" class="table-empty">Không có đơn xuất đã xóa.</td></tr>{% endfor %}</tbody>
+                    </table></div>
+                </details>
             </div>
         </section>
 

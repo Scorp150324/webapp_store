@@ -28,6 +28,7 @@ site_bp = Blueprint("site", __name__)
 PASSWORD_RESET_OTP_TTL_MINUTES = 10
 PASSWORD_RESET_MAX_ATTEMPTS = 5
 PASSWORD_RESET_MAX_SENDS_PER_HOUR = 3
+PRODUCTS_PER_PAGE = 24
 
 
 @site_bp.route("/image/<path:filename>")
@@ -178,6 +179,9 @@ PRODUCT_CATEGORIES = {
 def index():
     products = []
     products_error = False
+    total_products = 0
+    page = max(1, request.args.get("page", default=1, type=int) or 1)
+    total_pages = 1
     search = request.args.get("q", "").strip()[:100]
     selected_category = request.args.get("category", "")
     if selected_category not in PRODUCT_CATEGORIES:
@@ -213,16 +217,10 @@ def index():
                             category_ids.add(child_id)
                             pending_ids.append(child_id)
 
-            query = (
-                "SELECT p.ProductID, p.ProductName, p.SellingPrice, p.MainImage, "
-                "p.SKU, p.Barcode, c.CategoryName "
-                "FROM Products AS p "
-                "LEFT JOIN Categories AS c ON c.CategoryID = p.CategoryID "
-                "WHERE p.IsDeleted = 0"
-            )
+            filters = ["p.IsDeleted = 0"]
             parameters = {}
             if search:
-                query += f" AND p.ProductID IN ({product_search_subquery()})"
+                filters.append(f"p.ProductID IN ({product_search_subquery()})")
                 parameters["search"] = product_search_pattern(search)
             if selected_category:
                 if category_ids:
@@ -231,17 +229,48 @@ def index():
                         parameter_name = f"category_id_{index}"
                         category_parameters.append(f":{parameter_name}")
                         parameters[parameter_name] = category_id
-                    query += f" AND p.CategoryID IN ({', '.join(category_parameters)})"
+                    filters.append(
+                        f"p.CategoryID IN ({', '.join(category_parameters)})"
+                    )
                 else:
-                    query += " AND 1 = 0"
+                    filters.append("1 = 0")
+
+            where_clause = " AND ".join(filters)
+            total_products = int(
+                connection.execute(
+                    text(
+                        "SELECT COUNT(*) FROM Products AS p "
+                        f"WHERE {where_clause}"
+                    ),
+                    parameters,
+                ).scalar_one()
+            )
+            total_pages = max(
+                1, (total_products + PRODUCTS_PER_PAGE - 1) // PRODUCTS_PER_PAGE
+            )
+            page = min(page, total_pages)
+            parameters["limit"] = PRODUCTS_PER_PAGE
+            parameters["offset"] = (page - 1) * PRODUCTS_PER_PAGE
 
             result = connection.execute(
-                text(query), parameters
+                text(
+                    "SELECT p.ProductID, p.ProductName, p.SellingPrice, p.MainImage, "
+                    "p.SKU, p.Barcode, c.CategoryName "
+                    "FROM Products AS p "
+                    "LEFT JOIN Categories AS c ON c.CategoryID = p.CategoryID "
+                    f"WHERE {where_clause} "
+                    "ORDER BY p.ProductID DESC "
+                    "LIMIT :limit OFFSET :offset"
+                ),
+                parameters,
             )
             products = result.fetchall()
     except Exception:
         logger.exception("Không thể tải danh sách sản phẩm")
         products_error = True
+        total_products = 0
+        page = 1
+        total_pages = 1
 
     return render_template(
         "index.html",
@@ -250,6 +279,9 @@ def index():
         search=search,
         selected_category=selected_category,
         product_categories=PRODUCT_CATEGORIES,
+        total_products=total_products,
+        page=page,
+        total_pages=total_pages,
     )
 
 

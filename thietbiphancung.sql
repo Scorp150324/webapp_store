@@ -535,6 +535,8 @@ CREATE TABLE `products` (
   UNIQUE KEY `Barcode` (`Barcode`),
   KEY `fk_products_category` (`CategoryID`),
   KEY `fk_products_supplier` (`SupplierID`),
+  KEY `idx_products_active_category_listing` (`IsDeleted`,`CategoryID`,`ProductID`),
+  KEY `idx_products_active_listing` (`IsDeleted`,`ProductID`),
   KEY `idx_products_active_name_prefix` (`IsDeleted`,`ProductName`),
   KEY `idx_products_active_specs_prefix` (`IsDeleted`,`Specifications`(191)),
   CONSTRAINT `fk_products_category` FOREIGN KEY (`CategoryID`) REFERENCES `categories` (`CategoryID`) ON DELETE SET NULL,
@@ -969,6 +971,12 @@ CREATE INDEX idx_products_search_barcode_prefix
   WHERE "IsDeleted" = 0;
 CREATE INDEX idx_products_search_specs_prefix
   ON "Products" (lower("Specifications") text_pattern_ops)
+  WHERE "IsDeleted" = 0;
+CREATE INDEX idx_products_active_category_listing
+  ON "Products" ("CategoryID", "ProductID")
+  WHERE "IsDeleted" = 0;
+CREATE INDEX idx_products_active_listing
+  ON "Products" ("ProductID")
   WHERE "IsDeleted" = 0;
 
 CREATE TABLE "Product_Images" (

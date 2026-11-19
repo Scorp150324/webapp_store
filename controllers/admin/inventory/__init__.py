@@ -17,7 +17,8 @@ def handle_action(connection, action):
         note = connection.execute(
             text(
                 "SELECT InboundID FROM Inbound_Notes "
-                "WHERE InboundID=:id AND COALESCE(Status, '')<>'DELETED' FOR UPDATE"
+                "WHERE InboundID=:id AND COALESCE(Status, '') NOT LIKE 'DELETED%' "
+                "FOR UPDATE"
             ),
             {"id": inbound_id},
         ).first()
@@ -26,7 +27,8 @@ def handle_action(connection, action):
         connection.execute(
             text(
                 "UPDATE Inbound_Notes SET SupplierID=:supplier_id, Status=:status, "
-                "Notes=:notes WHERE InboundID=:id AND COALESCE(Status, '')<>'DELETED'"
+                "Notes=:notes WHERE InboundID=:id "
+                "AND COALESCE(Status, '') NOT LIKE 'DELETED%'"
             ),
             {
                 "supplier_id": supplier_id,
@@ -42,21 +44,50 @@ def handle_action(connection, action):
         inbound_id = form_int("id", minimum=1)
         note = connection.execute(
             text(
-                "SELECT InboundID FROM Inbound_Notes "
-                "WHERE InboundID=:id AND COALESCE(Status, '')<>'DELETED' FOR UPDATE"
+                "SELECT Status FROM Inbound_Notes "
+                "WHERE InboundID=:id AND COALESCE(Status, '') NOT LIKE 'DELETED%' "
+                "FOR UPDATE"
             ),
             {"id": inbound_id},
-        ).first()
+        ).mappings().first()
         if not note:
             raise DashboardInputError("Không tìm thấy phiếu nhập đang hoạt động.")
+        deleted_status = note["Status"]
+        if deleted_status not in {"DRAFT", "COMPLETED", "CANCELLED"}:
+            deleted_status = "COMPLETED"
         connection.execute(
             text(
-                "UPDATE Inbound_Notes SET Status='DELETED' "
-                "WHERE InboundID=:id AND COALESCE(Status, '')<>'DELETED'"
+                "UPDATE Inbound_Notes SET Status=:deleted_status "
+                "WHERE InboundID=:id AND COALESCE(Status, '') NOT LIKE 'DELETED%'"
             ),
-            {"id": inbound_id},
+            {"id": inbound_id, "deleted_status": f"DELETED:{deleted_status}"},
         )
         flash(f"Đã ẩn phiếu nhập #{inbound_id}. Tồn kho không thay đổi.", "success")
+        return
+
+    if action == "inbound-restore":
+        inbound_id = form_int("id", minimum=1)
+        note = connection.execute(
+            text(
+                "SELECT Status FROM Inbound_Notes "
+                "WHERE InboundID=:id AND COALESCE(Status, '') LIKE 'DELETED%' "
+                "FOR UPDATE"
+            ),
+            {"id": inbound_id},
+        ).mappings().first()
+        if not note:
+            raise DashboardInputError("Không tìm thấy phiếu nhập đã xóa.")
+        _, separator, previous_status = (note["Status"] or "").partition(":")
+        if not separator or previous_status not in {"DRAFT", "COMPLETED", "CANCELLED"}:
+            previous_status = "COMPLETED"
+        connection.execute(
+            text(
+                "UPDATE Inbound_Notes SET Status=:status "
+                "WHERE InboundID=:id AND COALESCE(Status, '') LIKE 'DELETED%'"
+            ),
+            {"id": inbound_id, "status": previous_status},
+        )
+        flash(f"Đã khôi phục phiếu nhập #{inbound_id}. Tồn kho không thay đổi.", "success")
         return
 
     if action == "outbound-update":
@@ -67,7 +98,8 @@ def handle_action(connection, action):
         order = connection.execute(
             text(
                 "SELECT OrderID FROM Orders "
-                "WHERE OrderID=:id AND COALESCE(OrderStatus, '')<>'DELETED' FOR UPDATE"
+                "WHERE OrderID=:id AND COALESCE(OrderStatus, '') NOT LIKE 'DELETED%' "
+                "FOR UPDATE"
             ),
             {"id": order_id},
         ).first()
@@ -76,7 +108,7 @@ def handle_action(connection, action):
         connection.execute(
             text(
                 "UPDATE Orders SET OrderStatus=:status, Notes=:notes "
-                "WHERE OrderID=:id AND COALESCE(OrderStatus, '')<>'DELETED'"
+                "WHERE OrderID=:id AND COALESCE(OrderStatus, '') NOT LIKE 'DELETED%'"
             ),
             {
                 "status": status,
@@ -91,21 +123,52 @@ def handle_action(connection, action):
         order_id = form_int("id", minimum=1)
         order = connection.execute(
             text(
-                "SELECT OrderID FROM Orders "
-                "WHERE OrderID=:id AND COALESCE(OrderStatus, '')<>'DELETED' FOR UPDATE"
+                "SELECT OrderStatus FROM Orders "
+                "WHERE OrderID=:id AND COALESCE(OrderStatus, '') NOT LIKE 'DELETED%' "
+                "FOR UPDATE"
             ),
             {"id": order_id},
-        ).first()
+        ).mappings().first()
         if not order:
             raise DashboardInputError("Không tìm thấy đơn xuất đang hoạt động.")
+        deleted_status = order["OrderStatus"]
+        if deleted_status not in {"PENDING", "PAID", "SHIPPED", "COMPLETED", "CANCELLED"}:
+            deleted_status = "PAID"
         connection.execute(
             text(
-                "UPDATE Orders SET OrderStatus='DELETED' "
-                "WHERE OrderID=:id AND COALESCE(OrderStatus, '')<>'DELETED'"
+                "UPDATE Orders SET OrderStatus=:deleted_status "
+                "WHERE OrderID=:id AND COALESCE(OrderStatus, '') NOT LIKE 'DELETED%'"
             ),
-            {"id": order_id},
+            {"id": order_id, "deleted_status": f"DELETED:{deleted_status}"},
         )
         flash(f"Đã ẩn đơn xuất #{order_id}. Tồn kho không thay đổi.", "success")
+        return
+
+    if action == "outbound-restore":
+        order_id = form_int("id", minimum=1)
+        order = connection.execute(
+            text(
+                "SELECT OrderStatus FROM Orders "
+                "WHERE OrderID=:id AND COALESCE(OrderStatus, '') LIKE 'DELETED%' "
+                "FOR UPDATE"
+            ),
+            {"id": order_id},
+        ).mappings().first()
+        if not order:
+            raise DashboardInputError("Không tìm thấy đơn xuất đã xóa.")
+        _, separator, previous_status = (order["OrderStatus"] or "").partition(":")
+        if not separator or previous_status not in {
+            "PENDING", "PAID", "SHIPPED", "COMPLETED", "CANCELLED"
+        }:
+            previous_status = "PAID"
+        connection.execute(
+            text(
+                "UPDATE Orders SET OrderStatus=:status "
+                "WHERE OrderID=:id AND COALESCE(OrderStatus, '') LIKE 'DELETED%'"
+            ),
+            {"id": order_id, "status": previous_status},
+        )
+        flash(f"Đã khôi phục đơn xuất #{order_id}. Tồn kho không thay đổi.", "success")
         return
 
     if action == "inbound-create":

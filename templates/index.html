@@ -6,7 +6,7 @@
             <p class="catalog-eyebrow">KHÁM PHÁ SẢN PHẨM</p>
             <h2>Phúc Thịnh ICT</h2>
         </div>
-        <span class="catalog-count">{{ products|length }} sản phẩm</span>
+        <span class="catalog-count">{{ total_products }} sản phẩm</span>
     </div>
 
     <form class="catalog-search" method="get" action="{{ url_for('site.index') }}">
@@ -23,9 +23,11 @@
 
     <nav class="catalog-filters" aria-label="Lọc sản phẩm theo danh mục">
         <a class="catalog-filter{% if not selected_category %} is-active{% endif %}"
+           {% if not selected_category %}aria-current="page"{% endif %}
            href="{{ url_for('site.index', q=search or None) }}">Tất cả</a>
         {% for slug, category in product_categories.items() %}
         <a class="catalog-filter{% if selected_category == slug %} is-active{% endif %}"
+           {% if selected_category == slug %}aria-current="page"{% endif %}
            href="{{ url_for('site.index', q=search or None, category=slug) }}">{{ category.label }}</a>
         {% endfor %}
     </nav>
@@ -72,5 +74,18 @@
         {% endfor %}
         {% endif %}
     </div>
+    {% if not products_error and total_pages > 1 %}
+    <nav class="catalog-pagination" aria-label="Điều hướng trang sản phẩm">
+        {% if page > 1 %}
+        <a class="catalog-page-link"
+           href="{{ url_for('site.index', q=search or None, category=selected_category or None, page=page - 1) }}">Trang trước</a>
+        {% endif %}
+        <span aria-current="page">Trang {{ page }} / {{ total_pages }}</span>
+        {% if page < total_pages %}
+        <a class="catalog-page-link"
+           href="{{ url_for('site.index', q=search or None, category=selected_category or None, page=page + 1) }}">Trang sau</a>
+        {% endif %}
+    </nav>
+    {% endif %}
 </section>
 {% endblock %}

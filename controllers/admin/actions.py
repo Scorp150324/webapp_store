@@ -16,9 +16,11 @@ ACTION_HANDLERS = {
     "employee-create": handle_employee_action,
     "employee-update": handle_employee_action,
     "employee-delete": handle_employee_action,
+    "employee-restore": handle_employee_action,
     "customer-create": handle_customer_action,
     "customer-update": handle_customer_action,
     "customer-delete": handle_customer_action,
+    "customer-restore": handle_customer_action,
     "product-create": handle_product_action,
     "product-update": handle_product_action,
     "product-delete": handle_product_action,
@@ -26,9 +28,11 @@ ACTION_HANDLERS = {
     "inbound-create": handle_inventory_action,
     "inbound-update": handle_inventory_action,
     "inbound-delete": handle_inventory_action,
+    "inbound-restore": handle_inventory_action,
     "outbound-create": handle_inventory_action,
     "outbound-update": handle_inventory_action,
     "outbound-delete": handle_inventory_action,
+    "outbound-restore": handle_inventory_action,
 }
 
 
@@ -37,6 +41,8 @@ def action(action):
     if handler is None:
         abort(404)
     if action.startswith("employee-") and session.get("role_id") != 1:
+        abort(403)
+    if action == "customer-restore" and session.get("role_id") != 1:
         abort(403)
 
     try:

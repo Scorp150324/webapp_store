@@ -75,7 +75,18 @@ def handle_action(connection, action):
             ),
             {"id": form_int("id", minimum=1)},
         )
-        flash("Đã ẩn khách hàng.", "success")
+        flash("Đã khóa khách hàng.", "success")
+        return
+
+    if action == "customer-restore":
+        connection.execute(
+            text(
+                "UPDATE Customers SET IsDeleted=0, DeletedAt=NULL "
+                "WHERE CustomerID=:id AND IsDeleted=1"
+            ),
+            {"id": form_int("id", minimum=1)},
+        )
+        flash("Đã khôi phục khách hàng.", "success")
         return
 
     raise ValueError(f"Unsupported customer action: {action}")

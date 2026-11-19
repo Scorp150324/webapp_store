@@ -101,7 +101,7 @@ def handle_action(connection, action):
             ),
             {"id": form_int("id", minimum=1)},
         )
-        flash("Đã ẩn sản phẩm.", "success")
+        flash("Đã xóa sản phẩm.", "success")
         return
 
     if action == "product-restore":

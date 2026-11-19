@@ -28,7 +28,8 @@ def _load_invoice(order_id):
                 "FROM Orders AS o "
                 "LEFT JOIN Customers AS c ON c.CustomerID=o.CustomerID "
                 "LEFT JOIN Users AS u ON u.UserID=o.EmployeeID "
-                "WHERE o.OrderID=:order_id AND COALESCE(o.OrderStatus, '') <> 'DELETED'"
+                "WHERE o.OrderID=:order_id "
+                "AND COALESCE(o.OrderStatus, '') NOT LIKE 'DELETED%'"
             ),
             {"order_id": order_id},
         ).mappings().first()

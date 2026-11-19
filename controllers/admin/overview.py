@@ -29,7 +29,7 @@ def home():
                     "WHERE OrderStatus IN ('PAID', 'COMPLETED', 'SHIPPED')) AS sales_total, "
                     "(SELECT COUNT(*) FROM Orders "
                     "WHERE OrderDate >= CURRENT_DATE "
-                    "AND COALESCE(OrderStatus, '') <> 'DELETED') AS orders_today"
+                    "AND COALESCE(OrderStatus, '') NOT LIKE 'DELETED%') AS orders_today"
                 )
             ).mappings().one()
             roles = connection.execute(
@@ -43,6 +43,17 @@ def home():
                     "WHERE u.IsDeleted = 0 ORDER BY u.UserID DESC LIMIT 100"
                 )
             ).mappings().all()
+            hidden_employees = []
+            if session.get("role_id") == 1:
+                hidden_employees = connection.execute(
+                    text(
+                        "SELECT u.UserID, u.Username, u.FullName, u.Email, u.Phone, "
+                        "u.DeletedAt, r.RoleName "
+                        "FROM Users AS u LEFT JOIN Roles AS r ON r.RoleID = u.RoleID "
+                        "WHERE u.IsDeleted = 1 "
+                        "ORDER BY u.DeletedAt DESC, u.UserID DESC LIMIT 100"
+                    )
+                ).mappings().all()
             customers = connection.execute(
                 text(
                     "SELECT CustomerID, Username, FullName, Phone, Email, "
@@ -51,6 +62,15 @@ def home():
                     "ORDER BY CustomerID DESC LIMIT 100"
                 )
             ).mappings().all()
+            hidden_customers = []
+            if session.get("role_id") == 1:
+                hidden_customers = connection.execute(
+                    text(
+                        "SELECT CustomerID, Username, FullName, Phone, Email, DeletedAt "
+                        "FROM Customers WHERE IsDeleted = 1 "
+                        "ORDER BY DeletedAt DESC, CustomerID DESC LIMIT 100"
+                    )
+                ).mappings().all()
             products = connection.execute(
                 text(
                     "SELECT p.ProductID, p.SKU, p.Barcode, p.ProductName, "
@@ -89,8 +109,18 @@ def home():
                     "FROM Inbound_Notes AS i "
                     "LEFT JOIN Suppliers AS s ON s.SupplierID = i.SupplierID "
                     "LEFT JOIN Users AS u ON u.UserID = i.CreatedBy "
-                    "WHERE COALESCE(i.Status, '') <> 'DELETED' "
+                    "WHERE COALESCE(i.Status, '') NOT LIKE 'DELETED%' "
                     "ORDER BY i.ImportDate DESC LIMIT 50"
+                )
+            ).mappings().all()
+            hidden_inbound_notes = connection.execute(
+                text(
+                    "SELECT i.InboundID, i.SupplierID, i.ImportDate, i.TotalAmount, "
+                    "i.Status, i.Notes, s.SupplierName "
+                    "FROM Inbound_Notes AS i "
+                    "LEFT JOIN Suppliers AS s ON s.SupplierID = i.SupplierID "
+                    "WHERE COALESCE(i.Status, '') LIKE 'DELETED%' "
+                    "ORDER BY i.ImportDate DESC, i.InboundID DESC LIMIT 100"
                 )
             ).mappings().all()
             orders = connection.execute(
@@ -101,8 +131,18 @@ def home():
                     "FROM Orders AS o "
                     "LEFT JOIN Customers AS c ON c.CustomerID = o.CustomerID "
                     "LEFT JOIN Users AS u ON u.UserID = o.EmployeeID "
-                    "WHERE COALESCE(o.OrderStatus, '') <> 'DELETED' "
+                    "WHERE COALESCE(o.OrderStatus, '') NOT LIKE 'DELETED%' "
                     "ORDER BY o.OrderDate DESC LIMIT 50"
+                )
+            ).mappings().all()
+            hidden_orders = connection.execute(
+                text(
+                    "SELECT o.OrderID, o.OrderCode, o.OrderDate, o.TotalAmount, "
+                    "o.OrderStatus, c.FullName AS CustomerName "
+                    "FROM Orders AS o "
+                    "LEFT JOIN Customers AS c ON c.CustomerID = o.CustomerID "
+                    "WHERE COALESCE(o.OrderStatus, '') LIKE 'DELETED%' "
+                    "ORDER BY o.OrderDate DESC, o.OrderID DESC LIMIT 100"
                 )
             ).mappings().all()
             login_logs = connection.execute(
@@ -129,12 +169,16 @@ def home():
         stats=stats,
         roles=roles,
         employees=employees,
+        hidden_employees=hidden_employees,
         customers=customers,
+        hidden_customers=hidden_customers,
         products=products,
         hidden_products=hidden_products,
         categories=categories,
         suppliers=suppliers,
         inbound_notes=inbound_notes,
+        hidden_inbound_notes=hidden_inbound_notes,
         orders=orders,
+        hidden_orders=hidden_orders,
         login_logs=login_logs,
     )

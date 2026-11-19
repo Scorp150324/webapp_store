@@ -91,4 +91,16 @@ def handle_action(connection, action):
         flash("Đã khóa tài khoản nhân viên.", "success")
         return
 
+    if action == "employee-restore":
+        user_id = form_int("id", minimum=1)
+        connection.execute(
+            text(
+                "UPDATE Users SET IsDeleted=0, DeletedAt=NULL "
+                "WHERE UserID=:id AND IsDeleted=1"
+            ),
+            {"id": user_id},
+        )
+        flash("Đã khôi phục tài khoản nhân viên.", "success")
+        return
+
     raise ValueError(f"Unsupported employee action: {action}")

@@ -219,6 +219,42 @@
     font-size: 1.1rem;
 }
 
+.report-export-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin: -0.35rem 0 1rem;
+}
+
+.report-export-button {
+    display: inline-flex;
+    min-height: 2rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem 0.75rem;
+    border-radius: 0.45rem;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.report-export-excel {
+    background: #15803d;
+}
+
+.report-export-excel:hover {
+    background: #166534;
+}
+
+.report-export-pdf {
+    background: #b91c1c;
+}
+
+.report-export-pdf:hover {
+    background: #991b1b;
+}
+
 .analytics-charts {
     display: grid;
     grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 1fr);
