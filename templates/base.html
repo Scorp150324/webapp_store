@@ -15,7 +15,7 @@
     {% block site_header %}
     <header class="{% if request.endpoint == 'site.index' %}site-header-tech{% else %}bg-blue-600{% endif %} text-white shadow-md p-4">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">Thiết bị công nghệ</h1>
+            <h1 class="text-xl font-bold">Sản phẩm công nghệ</h1>
             <nav class="auth-nav">
                 {% if session.get("user_id") %}
                 <span>Xin chào, {{ session.get("full_name") }}</span>
