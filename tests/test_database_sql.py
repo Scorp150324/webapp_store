@@ -81,6 +81,9 @@ class CatalogFakeResult:
     def all(self):
         return self.rows
 
+    def first(self):
+        return self.rows[0] if self.rows else None
+
     def scalar_one(self):
         return self.value
 
@@ -418,12 +421,13 @@ class CatalogFilterTests(unittest.TestCase):
         product_query = next(
             query for query in connection.statements if "ORDER BY p.ProductID" in query
         )
+        product_query_index = connection.statements.index(product_query)
         self.assertIn("p.CategoryID IN (:category_id_0, :category_id_1)", count_query)
         self.assertIn("LIMIT :limit OFFSET :offset", product_query)
         self.assertNotIn("p.SKU", product_query)
         self.assertNotIn("p.Barcode", product_query)
         self.assertEqual(
-            connection.parameters[-1],
+            connection.parameters[product_query_index],
             {
                 "category_id_0": 10,
                 "category_id_1": 11,
@@ -465,6 +469,13 @@ class ProductDetailAccessTests(unittest.TestCase):
             def execute(self, statement, parameters):
                 if "FROM Products AS p" in str(statement):
                     return FakeResult(product)
+                if "FROM Users AS u" in str(statement):
+                    return FakeResult(
+                        {
+                            "Email": "admin@example.invalid",
+                            "Phone": "0901 234 567",
+                        }
+                    )
                 return FakeResult()
 
         class FakeConnectionContext:
@@ -492,3 +503,6 @@ class ProductDetailAccessTests(unittest.TestCase):
         self.assertIn("Còn 7 sản phẩm".encode(), response.data)
         self.assertIn("12 tháng".encode(), response.data)
         self.assertNotIn("Mã sản phẩm".encode(), response.data)
+        self.assertIn(b"0901 234 567", response.data)
+        self.assertIn(b'href="tel:0901234567"', response.data)
+        self.assertNotIn(b"admin@example.invalid", response.data)

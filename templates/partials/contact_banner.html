@@ -1,0 +1,35 @@
+<aside class="contact-banner" aria-labelledby="contact-banner-title">
+    <div class="contact-banner-copy">
+        <span class="contact-banner-eyebrow">PHÚC THỊNH ICT · HỖ TRỢ KHÁCH HÀNG</span>
+        <h2 id="contact-banner-title">Cần tư vấn thiết bị?</h2>
+        <p>Liên hệ quản trị viên để được hỗ trợ về sản phẩm và thông tin đặt hàng.</p>
+    </div>
+    <div class="contact-banner-actions">
+        {% if admin_contact and admin_contact.phone %}
+        <a class="contact-banner-link" href="tel:{{ admin_contact.phone_href }}">
+            <span class="contact-banner-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M7 3h3l2 5-2 1.5a15 15 0 0 0 4.5 4.5L16 12l5 2v3c0 1.1-.9 2-2 2C10.7 19 5 13.3 5 6c0-1.7.8-3 2-3Z"
+                          stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+            </span>
+            <span><small>Gọi tư vấn</small><strong>{{ admin_contact.phone }}</strong></span>
+        </a>
+        {% endif %}
+        {% if admin_contact and admin_contact.email %}
+        <a class="contact-banner-link" href="mailto:{{ admin_contact.email }}">
+            <span class="contact-banner-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M4 6h16v12H4zM4 7l8 6 8-6" stroke="currentColor"
+                          stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </span>
+            <span><small>Email hỗ trợ</small><strong>{{ admin_contact.email }}</strong></span>
+        </a>
+        {% endif %}
+        {% if not admin_contact or (not admin_contact.phone and not admin_contact.email) %}
+        <p class="contact-banner-unavailable">Thông tin liên hệ đang được cập nhật.</p>
+        {% endif %}
+    </div>
+</aside>

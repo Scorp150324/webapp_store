@@ -4,6 +4,7 @@ import re
 from flask import abort, render_template
 from sqlalchemy.exc import SQLAlchemyError
 
+from controllers.contact import get_admin_contact
 from database import engine, text
 
 logger = logging.getLogger(__name__)
@@ -48,8 +49,10 @@ def product_detail(product_id):
                     ),
                     {"product_id": product_id},
                 ).mappings().all()
+                admin_contact = get_admin_contact(connection)
             else:
                 image_rows = []
+                admin_contact = None
     except SQLAlchemyError:
         logger.exception("Không thể tải chi tiết sản phẩm %s", product_id)
         abort(503, description="Không thể tải chi tiết sản phẩm lúc này.")
@@ -68,5 +71,6 @@ def product_detail(product_id):
         "customer/product_detail.html",
         product=product,
         product_images=product_images,
+        admin_contact=admin_contact,
         specification_rows=_parse_specifications(product["Specifications"]),
     )

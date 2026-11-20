@@ -21,6 +21,7 @@ from database import (
     product_search_subquery,
     text,
 )
+from controllers.contact import get_admin_contact
 
 logger = logging.getLogger(__name__)
 site_bp = Blueprint("site", __name__)
@@ -178,6 +179,8 @@ PRODUCT_CATEGORIES = {
 @site_bp.route("/")
 def index():
     products = []
+    featured_products = []
+    admin_contact = None
     products_error = False
     total_products = 0
     page = max(1, request.args.get("page", default=1, type=int) or 1)
@@ -265,6 +268,22 @@ def index():
                 parameters,
             )
             products = result.fetchall()
+            featured_products = (
+                connection.execute(
+                    text(
+                        "SELECT p.ProductID, p.ProductName, p.SellingPrice, "
+                        "p.MainImage, c.CategoryName "
+                        "FROM Products AS p "
+                        "LEFT JOIN Categories AS c ON c.CategoryID = p.CategoryID "
+                        "WHERE p.IsDeleted = 0 AND p.MainImage IS NOT NULL "
+                        "AND TRIM(p.MainImage) <> '' "
+                        "ORDER BY p.ProductID ASC LIMIT 3"
+                    )
+                )
+                .mappings()
+                .all()
+            )
+            admin_contact = get_admin_contact(connection)
     except Exception:
         logger.exception("Không thể tải danh sách sản phẩm")
         products_error = True
@@ -275,6 +294,8 @@ def index():
     return render_template(
         "index.html",
         products=products,
+        featured_products=featured_products,
+        admin_contact=admin_contact,
         products_error=products_error,
         search=search,
         selected_category=selected_category,

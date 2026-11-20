@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+{% include "partials/contact_banner.html" %}
 <section class="catalog">
     <div class="catalog-heading">
         <div>
@@ -47,6 +48,77 @@
             </form>
         </details>
     </div>
+
+    {% if featured_products %}
+    <section class="product-hero" data-product-carousel
+             role="region" aria-label="Sản phẩm nổi bật" aria-roledescription="carousel">
+        <div class="product-hero-slides">
+            {% for product in featured_products %}
+            <article class="product-hero-slide{% if loop.first %} is-active{% endif %}"
+                     data-carousel-slide
+                     role="group" aria-roledescription="slide"
+                     aria-hidden="{{ 'false' if loop.first else 'true' }}"
+                     aria-label="Sản phẩm {{ loop.index }} trên {{ loop.length }}">
+                <div class="product-hero-copy">
+                    <span class="product-hero-eyebrow">THIẾT BỊ CÔNG NGHỆ</span>
+                    {% if product.CategoryName %}
+                    <span class="product-hero-category">{{ product.CategoryName }}</span>
+                    {% endif %}
+                    <h2>{{ product.ProductName }}</h2>
+                    <p>Xem thông tin, giá bán và tình trạng sản phẩm tại Phúc Thịnh ICT.</p>
+                    <div class="product-hero-price">
+                        <span>Giá bán</span>
+                        <strong>{{ "{:,.0f}".format(product.SellingPrice) }} <small>VNĐ</small></strong>
+                    </div>
+                    <a class="product-hero-link"
+                       href="{{ url_for('customer.product_detail', product_id=product.ProductID) }}">
+                        Xem chi tiết
+                        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+                            <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor"
+                                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </div>
+                <div class="product-hero-visual">
+                    <div class="product-hero-glow" aria-hidden="true"></div>
+                    <img src="{{ product.MainImage }}" alt="{{ product.ProductName }}" loading="{{ 'eager' if loop.first else 'lazy' }}">
+                    {% if product.CategoryName %}
+                    <span class="product-hero-image-label">{{ product.CategoryName }}</span>
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% if featured_products|length > 1 %}
+        <div class="product-hero-controls" aria-label="Điều khiển banner sản phẩm">
+            <button type="button" class="product-hero-control" data-carousel-prev
+                    aria-label="Sản phẩm trước">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+                    <path d="m15 18-6-6 6-6" stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <div class="product-hero-dots" aria-label="Chọn sản phẩm">
+                {% for product in featured_products %}
+                <button type="button" class="product-hero-dot{% if loop.first %} is-active{% endif %}"
+                        data-carousel-dot="{{ loop.index0 }}"
+                        aria-label="Hiện sản phẩm {{ loop.index }}"
+                        aria-current="{{ 'true' if loop.first else 'false' }}"></button>
+                {% endfor %}
+            </div>
+            <button type="button" class="product-hero-control" data-carousel-next
+                    aria-label="Sản phẩm tiếp theo">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+                    <path d="m9 18 6-6-6-6" stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button type="button" class="product-hero-pause" data-carousel-toggle
+                    aria-pressed="false">Tạm dừng</button>
+        </div>
+        {% endif %}
+    </section>
+    {% endif %}
 
     <div class="catalog-grid">
         {% if products_error %}
@@ -101,4 +173,5 @@
     </nav>
     {% endif %}
 </section>
+<script defer src="/static/js/product-banner.js"></script>
 {% endblock %}
