@@ -420,6 +420,8 @@ class CatalogFilterTests(unittest.TestCase):
         )
         self.assertIn("p.CategoryID IN (:category_id_0, :category_id_1)", count_query)
         self.assertIn("LIMIT :limit OFFSET :offset", product_query)
+        self.assertNotIn("p.SKU", product_query)
+        self.assertNotIn("p.Barcode", product_query)
         self.assertEqual(
             connection.parameters[-1],
             {
@@ -429,3 +431,64 @@ class CatalogFilterTests(unittest.TestCase):
                 "offset": 24,
             },
         )
+
+
+class ProductDetailAccessTests(unittest.TestCase):
+    def test_staff_can_view_public_product_details(self):
+        from app import create_app
+
+        product = {
+            "ProductID": 1,
+            "ProductName": "Example Product",
+            "MainImage": None,
+            "Specifications": "",
+            "SellingPrice": 1000,
+            "StockQuantity": 7,
+            "WarrantyMonths": 12,
+            "CategoryName": "PC",
+        }
+
+        class FakeResult:
+            def __init__(self, row=None):
+                self.row = row
+
+            def mappings(self):
+                return self
+
+            def first(self):
+                return self.row
+
+            def all(self):
+                return []
+
+        class FakeConnection:
+            def execute(self, statement, parameters):
+                if "FROM Products AS p" in str(statement):
+                    return FakeResult(product)
+                return FakeResult()
+
+        class FakeConnectionContext:
+            def __enter__(self):
+                return FakeConnection()
+
+            def __exit__(self, exc_type, exc_value, traceback):
+                return False
+
+        class FakeEngine:
+            def connect(self):
+                return FakeConnectionContext()
+
+        app = create_app()
+        client = app.test_client()
+        with client.session_transaction() as session:
+            session["user_id"] = 1
+            session["user_type"] = "staff"
+
+        with patch("controllers.customer.products.engine", FakeEngine()):
+            response = client.get("/customer/products/1")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Example Product", response.data)
+        self.assertIn("Còn 7 sản phẩm".encode(), response.data)
+        self.assertIn("12 tháng".encode(), response.data)
+        self.assertNotIn("Mã sản phẩm".encode(), response.data)

@@ -1,16 +1,6 @@
-from flask import Blueprint, abort, flash, redirect, session, url_for
+from flask import Blueprint
 
 customer_bp = Blueprint("customer", __name__, url_prefix="/customer")
-
-
-@customer_bp.before_request
-def require_customer_login():
-    if session.get("user_type") != "customer":
-        if session.get("user_id"):
-            abort(403)
-        flash("Vui lòng đăng nhập tài khoản khách hàng để xem chi tiết sản phẩm.", "error")
-        return redirect(url_for("site.login"))
-
 
 from controllers.customer.products import product_detail
 

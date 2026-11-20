@@ -1,3 +1,16 @@
+body.bg-gray-50 {
+    background-color: #eaf3ff;
+    background-image:
+        radial-gradient(ellipse at 12% 16%, rgb(59 130 246 / 16%), transparent 32rem),
+        radial-gradient(ellipse at 88% 42%, rgb(14 165 233 / 13%), transparent 30rem),
+        radial-gradient(circle, rgb(37 99 235 / 18%) 1px, transparent 1.5px),
+        linear-gradient(rgb(37 99 235 / 5%) 1px, transparent 1px),
+        linear-gradient(90deg, rgb(37 99 235 / 5%) 1px, transparent 1px);
+    background-repeat: no-repeat, no-repeat, repeat, repeat, repeat;
+    background-size: auto, auto, 28px 28px, 56px 56px, 56px 56px;
+    background-attachment: fixed;
+}
+
 .catalog {
     max-width: 80rem;
     margin: 0 auto;
@@ -41,14 +54,24 @@
     white-space: nowrap;
 }
 
+.catalog-search-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+}
+
 .catalog-search {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    min-width: 0;
+    flex: 1;
     padding: 0.45rem;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #bfdbfe;
     border-radius: 0.75rem;
-    background: #f8fafc;
+    background: linear-gradient(120deg, #dbeafe, #e0f2fe 55%, #ecfeff);
+    box-shadow: inset 0 1px 3px rgb(37 99 235 / 8%);
 }
 
 .catalog-search:focus-within {
@@ -66,12 +89,18 @@
 .catalog-search input {
     min-width: 0;
     flex: 1;
-    padding: 0.65rem 0;
-    border: 0;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid rgb(147 197 253 / 55%);
+    border-radius: 0.5rem;
     outline: 0;
-    background: transparent;
+    background: rgb(255 255 255 / 72%);
     color: #0f172a;
     font: inherit;
+}
+
+.catalog-search input:focus {
+    border-color: #60a5fa;
+    background: #fff;
 }
 
 .catalog-search button {
@@ -87,6 +116,94 @@
 }
 
 .catalog-search button:hover {
+    background: #1d4ed8;
+}
+
+.catalog-filter-menu {
+    position: relative;
+    flex: 0 0 auto;
+}
+
+.catalog-filter-toggle {
+    display: flex;
+    min-height: 3.35rem;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.75rem;
+    background: #fff;
+    color: #334155;
+    font: inherit;
+    font-weight: 650;
+    cursor: pointer;
+    list-style: none;
+}
+
+.catalog-filter-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.catalog-filter-toggle:hover,
+.catalog-filter-menu[open] .catalog-filter-toggle {
+    border-color: #93c5fd;
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.catalog-filter-toggle:focus-visible {
+    outline: 3px solid rgb(59 130 246 / 25%);
+    outline-offset: 2px;
+}
+
+.catalog-filter-toggle svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.catalog-filter-panel {
+    position: absolute;
+    z-index: 2;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    display: grid;
+    width: min(18rem, calc(100vw - 3rem));
+    gap: 0.65rem;
+    padding: 1rem;
+    border: 1px solid #bfdbfe;
+    border-radius: 0.75rem;
+    background: linear-gradient(145deg, #eff6ff, #e0f2fe 60%, #ecfeff);
+    box-shadow: 0 12px 30px rgb(15 23 42 / 14%), inset 0 1px 3px rgb(37 99 235 / 8%);
+}
+
+.catalog-filter-panel label {
+    color: #334155;
+    font-size: 0.9rem;
+    font-weight: 650;
+}
+
+.catalog-filter-panel select {
+    width: 100%;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid #bfdbfe;
+    border-radius: 0.55rem;
+    background: rgb(255 255 255 / 82%);
+    color: #0f172a;
+    font: inherit;
+}
+
+.catalog-filter-panel button {
+    padding: 0.65rem 0.8rem;
+    border: 0;
+    border-radius: 0.55rem;
+    background: #2563eb;
+    color: #fff;
+    font: inherit;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.catalog-filter-panel button:hover {
     background: #1d4ed8;
 }
 
@@ -249,12 +366,6 @@
     font-weight: 600;
 }
 
-.product-sku {
-    margin: 0.5rem 0 0;
-    color: #94a3b8;
-    font-size: 0.78rem;
-}
-
 .product-view-details {
     display: inline-block;
     margin-top: 0.8rem;
@@ -315,13 +426,25 @@
         font-size: 0.75rem;
     }
 
-    .catalog-search {
+    .catalog-search-row {
         gap: 0.45rem;
     }
 
     .catalog-search button {
         padding: 0.65rem 0.75rem;
         font-size: 0.85rem;
+    }
+
+    .catalog-filter-toggle {
+        min-height: 3.15rem;
+        gap: 0.35rem;
+        padding: 0.6rem 0.65rem;
+        font-size: 0.85rem;
+    }
+
+    .catalog-filter-toggle svg {
+        width: 1rem;
+        height: 1rem;
     }
 
     .catalog-grid {

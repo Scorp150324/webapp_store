@@ -29,8 +29,9 @@ def product_detail(product_id):
         with engine.connect() as connection:
             product = connection.execute(
                 text(
-                    "SELECT p.ProductID, p.ProductName, p.SKU, "
+                    "SELECT p.ProductID, p.ProductName, "
                     "p.MainImage, p.Specifications, p.SellingPrice, "
+                    "p.StockQuantity, p.WarrantyMonths, "
                     "c.CategoryName "
                     "FROM Products AS p "
                     "LEFT JOIN Categories AS c ON c.CategoryID = p.CategoryID "

@@ -255,7 +255,7 @@ def index():
             result = connection.execute(
                 text(
                     "SELECT p.ProductID, p.ProductName, p.SellingPrice, p.MainImage, "
-                    "p.SKU, p.Barcode, c.CategoryName "
+                    "c.CategoryName "
                     "FROM Products AS p "
                     "LEFT JOIN Categories AS c ON c.CategoryID = p.CategoryID "
                     f"WHERE {where_clause} "
