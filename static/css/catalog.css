@@ -923,23 +923,50 @@ body.bg-gray-50.dashboard-tech-body {
     }
 
     .catalog-search-row {
-        gap: 0.45rem;
-    }
-
-    .catalog-search button {
-        padding: 0.65rem 0.75rem;
-        font-size: 0.85rem;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.65rem;
     }
 
     .catalog-search {
+        width: 100%;
         height: 3.25rem;
+        flex: none;
+        gap: 0.5rem;
+    }
+
+    .catalog-search-icon {
+        padding-left: 0.35rem;
+        font-size: 1.45rem;
+    }
+
+    .catalog-search input {
+        flex: 1 1 0;
+        padding: 0.6rem 0.55rem;
+        font-size: 0.9rem;
+    }
+
+    .catalog-search button {
+        flex: 0 0 auto;
+        padding: 0.65rem 0.7rem;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+
+    .catalog-filter-menu {
+        align-self: flex-start;
     }
 
     .catalog-filter-toggle {
-        height: 3.25rem;
+        height: 2.85rem;
         gap: 0.35rem;
         padding: 0.6rem 0.65rem;
         font-size: 0.85rem;
+    }
+
+    .catalog-filter-panel {
+        right: auto;
+        left: 0;
     }
 
     .catalog-filter-toggle svg {
