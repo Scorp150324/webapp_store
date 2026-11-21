@@ -13,7 +13,8 @@ body.bg-gray-50 {
 
 body.bg-gray-50.homepage-body,
 body.bg-gray-50.auth-tech-body,
-body.bg-gray-50.product-tech-body {
+body.bg-gray-50.product-tech-body,
+body.bg-gray-50.dashboard-tech-body {
     background-color: #081a38;
     background-image:
         radial-gradient(ellipse at 10% 12%, rgb(37 99 235 / 36%), transparent 34rem),

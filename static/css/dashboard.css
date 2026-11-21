@@ -42,9 +42,15 @@
     display: block;
 }
 
+.dashboard-brand strong {
+    color: #0f172a;
+    font-size: 1rem;
+    font-weight: 750;
+}
+
 .dashboard-brand small {
     margin-top: 0.2rem;
-    color: #64748b;
+    color: #475569;
     font-size: 0.62rem;
     letter-spacing: 0.08em;
 }
@@ -219,6 +225,16 @@
     font-size: 1.1rem;
 }
 
+.analytics-loading {
+    margin: 0 0 1rem;
+    color: #475569;
+    font-size: 0.9rem;
+}
+
+.analytics-loading[hidden] {
+    display: none;
+}
+
 .report-export-actions {
     display: flex;
     flex-wrap: wrap;
@@ -390,14 +406,26 @@
 
 .stat-card > span,
 .stat-card small {
-    color: #64748b;
-    font-size: 0.82rem;
+    color: #475569;
+    font-size: 0.86rem;
 }
 
 .stat-card strong {
     overflow-wrap: anywhere;
     color: #0f172a;
     font-size: clamp(1.1rem, 2vw, 1.65rem);
+}
+
+body.dashboard-tech-body .dashboard-title h2 {
+    color: #f8fafc;
+}
+
+body.dashboard-tech-body .dashboard-title > div > p:last-child {
+    color: #cbd5e1;
+}
+
+body.dashboard-tech-body .dashboard-title .dashboard-eyebrow {
+    color: #7dd3fc;
 }
 
 .dashboard-panel {
@@ -426,6 +454,18 @@
     font-size: 0.9rem;
     font-weight: 650;
     cursor: pointer;
+}
+
+#customers-section > details.dashboard-create:first-of-type > summary {
+    padding: 0.65rem 0.85rem;
+    font-size: 0.85rem;
+}
+
+#customers-section > details.dashboard-create:first-of-type .dashboard-form button {
+    align-self: end;
+    min-height: 2.5rem;
+    box-sizing: border-box;
+    padding: 0.45rem 0.75rem;
 }
 
 .dashboard-form {

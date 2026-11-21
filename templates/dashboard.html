@@ -37,7 +37,6 @@
             </div>
             <span class="dashboard-role">{{ "Quản trị viên" if session.get("role_id") == 1 else "Quản lý" }}</span>
         </div>
-
         <section class="dashboard-stats" aria-label="Thống kê nhanh">
             <article class="stat-card"><span>Nhân viên hoạt động</span><strong>{{ stats.employee_count }}</strong><small>Tài khoản chưa khóa</small></article>
             <article class="stat-card"><span>Khách hàng</span><strong>{{ stats.customer_count }}</strong><small>Khách hàng hoạt động</small></article>
@@ -49,9 +48,9 @@
         <section class="dashboard-panel" id="analytics-section" data-dashboard-view="analytics">
             <div class="panel-heading">
                 <div><p class="dashboard-eyebrow">BÁO CÁO DOANH THU</p><h3>Thống kê theo thời gian</h3></div>
-                <span>{{ period_label }}</span>
+                <span id="analytics-period-label">{{ period_label }}</span>
             </div>
-            <form class="analytics-filters" method="get" action="{{ url_for('dashboard.home') }}#analytics-section">
+            <form class="analytics-filters" method="get" action="{{ url_for('dashboard.home') }}#analytics-section" data-analytics-form>
                 <label>Khoảng thống kê
                     <select name="period">
                         <option value="day" {% if period == "day" %}selected{% endif %}>Theo ngày</option>
@@ -65,20 +64,21 @@
                 <button type="submit">Xem thống kê</button>
             </form>
             <div class="analytics-summary">
-                <article><span>Doanh thu trong kỳ</span><strong>{{ "{:,.0f}".format(period_sales) }} ₫</strong></article>
-                <article><span>Đơn hàng hợp lệ</span><strong>{{ period_order_count }}</strong></article>
+                <article><span>Doanh thu trong kỳ</span><strong id="analytics-sales-total">—</strong></article>
+                <article><span>Đơn hàng hợp lệ</span><strong id="analytics-order-count">—</strong></article>
                 <small>Chỉ tính đơn PAID, COMPLETED và SHIPPED.</small>
             </div>
             <div class="report-export-actions">
                 <a class="report-export-button report-export-excel"
-                   href="{{ url_for('dashboard.statistics_excel', period=period, date=selected_date) }}">Xuất Excel</a>
+                   href="{{ url_for('dashboard.statistics_excel', period=period, date=selected_date) }}" data-analytics-export="excel">Xuất Excel</a>
                 <a class="report-export-button report-export-pdf"
-                   href="{{ url_for('dashboard.statistics_pdf', period=period, date=selected_date) }}">Xuất PDF</a>
+                   href="{{ url_for('dashboard.statistics_pdf', period=period, date=selected_date) }}" data-analytics-export="pdf">Xuất PDF</a>
             </div>
+            <p class="analytics-loading" id="analytics-loading" role="status" aria-live="polite">Mở mục Thống kê để tải báo cáo.</p>
             <div class="analytics-charts">
                 <article class="chart-card">
                     <h4>Biến động doanh thu</h4>
-                    <p>{% if period == "day" %}Theo giờ{% elif period == "month" %}Theo ngày trong tháng{% else %}Theo tháng trong năm{% endif %}</p>
+                    <p id="analytics-chart-period">Theo kỳ đã chọn</p>
                     <div class="line-chart-wrap">
                         <svg id="revenue-line-chart" class="revenue-line-chart" role="img" aria-label="Biểu đồ đường doanh thu"></svg>
                     </div>
@@ -92,8 +92,6 @@
                     </div>
                 </article>
             </div>
-            <script type="application/json" id="revenue-chart-data">{{ sales_chart|tojson }}</script>
-            <script type="application/json" id="category-chart-data">{{ category_chart|tojson }}</script>
         </section>
 
         <section class="dashboard-panel" id="employees-section" data-dashboard-view="employees">

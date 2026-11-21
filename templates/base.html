@@ -11,9 +11,9 @@
     <link rel="stylesheet" href="/static/css/dashboard.css">
     {% block styles %}{% endblock %}
 </head>
-<body class="bg-gray-50 text-gray-900 font-sans{% if request.endpoint == 'site.index' %} homepage-body{% elif request.endpoint in ['site.login', 'site.register'] %} auth-tech-body{% elif request.endpoint == 'customer.product_detail' %} product-tech-body{% endif %}">
+<body class="bg-gray-50 text-gray-900 font-sans{% if request.endpoint == 'site.index' %} homepage-body{% elif request.endpoint in ['site.login', 'site.register'] %} auth-tech-body{% elif request.endpoint == 'customer.product_detail' %} product-tech-body{% elif request.endpoint == 'dashboard.home' %} dashboard-tech-body{% endif %}">
     {% block site_header %}
-    <header class="{% if request.endpoint in ['site.index', 'site.login', 'site.register', 'customer.product_detail'] %}site-header-tech{% else %}bg-blue-600{% endif %} text-white shadow-md p-4">
+    <header class="{% if request.endpoint in ['site.index', 'site.login', 'site.register', 'customer.product_detail', 'dashboard.home'] %}site-header-tech{% else %}bg-blue-600{% endif %} text-white shadow-md p-4">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold">Sản phẩm công nghệ</h1>
             <nav class="auth-nav">

@@ -187,5 +187,7 @@ function renderCategoryChart(data) {
     });
 }
 
-renderRevenueChart(readChartData("revenue-chart-data"));
-renderCategoryChart(readChartData("category-chart-data"));
+window.renderDashboardCharts = (analytics) => {
+    renderRevenueChart(analytics?.sales_chart);
+    renderCategoryChart(analytics?.category_chart);
+};

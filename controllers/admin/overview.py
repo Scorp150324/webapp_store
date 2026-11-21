@@ -2,7 +2,7 @@ import logging
 import secrets
 from datetime import date
 
-from flask import abort, render_template, request, session
+from flask import abort, jsonify, render_template, request, session
 from controllers.admin.analytics import get_period, load_analytics
 from database import engine, text
 
@@ -27,8 +27,7 @@ def home():
                     "WHERE IsDeleted = 0) AS stock_count, "
                     "(SELECT COALESCE(SUM(TotalAmount), 0) FROM Orders "
                     "WHERE OrderStatus IN ('PAID', 'COMPLETED', 'SHIPPED')) AS sales_total, "
-                    "(SELECT COUNT(*) FROM Orders "
-                    "WHERE OrderDate >= CURRENT_DATE "
+                    "(SELECT COUNT(*) FROM Orders WHERE OrderDate >= CURRENT_DATE "
                     "AND COALESCE(OrderStatus, '') NOT LIKE 'DELETED%') AS orders_today"
                 )
             ).mappings().one()
@@ -154,7 +153,6 @@ def home():
                     "ORDER BY l.LoggedAt DESC LIMIT 100"
                 )
             ).mappings().all()
-            analytics = load_analytics(connection, selected_period)
     except Exception:
         logger.exception("Không thể tải dashboard quản lý")
         abort(503, description="Không thể tải dữ liệu quản lý. Kiểm tra schema cơ sở dữ liệu.")
@@ -165,7 +163,6 @@ def home():
         period=request.args.get("period", "day"),
         selected_date=selected_period["selected_date"].isoformat(),
         period_label=selected_period["period_label"],
-        **analytics,
         stats=stats,
         roles=roles,
         employees=employees,
@@ -181,4 +178,26 @@ def home():
         orders=orders,
         hidden_orders=hidden_orders,
         login_logs=login_logs,
+    )
+
+
+def analytics_data():
+    period = get_period(
+        request.args.get("period", "day"),
+        request.args.get("date", date.today().isoformat()),
+    )
+    try:
+        with engine.connect() as connection:
+            analytics = load_analytics(connection, period)
+    except Exception:
+        logger.exception("Unable to load dashboard analytics")
+        abort(503, description="Không thể tải dữ liệu thống kê lúc này.")
+
+    return jsonify(
+        period=period["period_label"],
+        selected_date=period["selected_date"].isoformat(),
+        period_sales=float(analytics["period_sales"] or 0),
+        period_order_count=analytics["period_order_count"],
+        sales_chart=analytics["sales_chart"],
+        category_chart=analytics["category_chart"],
     )
