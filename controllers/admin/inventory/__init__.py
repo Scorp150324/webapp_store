@@ -1,6 +1,6 @@
 import secrets
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from flask import flash, request, session
 from database import insert_id, text
@@ -381,7 +381,7 @@ def handle_action(connection, action):
         product_id = form_int("product_id", minimum=1)
         supplier_id = form_int("supplier_id", minimum=1, optional=True)
         quantity = form_int("quantity", minimum=1)
-        import_price = form_decimal("import_price")
+        import_price = form_decimal("import_price").quantize(Decimal("1"), rounding=ROUND_HALF_UP)
         product = connection.execute(
             text(
                 "SELECT ProductID, IsHasSerial FROM Products "
@@ -458,6 +458,7 @@ def handle_action(connection, action):
         product_id = form_int("product_id", minimum=1)
         customer_id = form_int("customer_id", minimum=1, optional=True)
         quantity = form_int("quantity", minimum=1)
+        unit_price = form_decimal("unit_price").quantize(Decimal("1"), rounding=ROUND_HALF_UP)
         payment_method = form_value("payment_method", required=True, maximum=20)
         if payment_method not in {"CASH", "BANK_TRANSFER", "CARD", "MOMO", "VNPAY"}:
             raise DashboardInputError("Phương thức thanh toán không hợp lệ.")
@@ -489,7 +490,7 @@ def handle_action(connection, action):
                     f"{len(available_serials)} serial khả dụng; bạn đang xuất {quantity}."
                 )
 
-        amount = Decimal(product["SellingPrice"]) * quantity
+        amount = unit_price * quantity
         order_code = f"HD{datetime.now():%Y%m%d%H%M%S}{secrets.token_hex(2).upper()}"
         order_id = insert_id(
             connection,
@@ -516,7 +517,7 @@ def handle_action(connection, action):
                 "order_id": order_id,
                 "product_id": product_id,
                 "quantity": quantity,
-                "price": product["SellingPrice"],
+                "price": unit_price,
                 "total": amount,
             },
             "OrderDetailID",

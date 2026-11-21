@@ -45,5 +45,14 @@ function showDashboardView() {
     });
 }
 
+const inboundProduct = document.querySelector("[data-inbound-product]");
+const inboundCostInput = document.querySelector("[data-inbound-cost-input]");
+const updateInboundCost = () => {
+    const cost = Number(inboundProduct?.selectedOptions[0]?.dataset.costPrice);
+    if (inboundCostInput && Number.isFinite(cost)) inboundCostInput.value = String(Math.round(cost));
+};
+inboundProduct?.addEventListener("change", updateInboundCost);
+updateInboundCost();
+
 window.addEventListener("hashchange", showDashboardView);
 showDashboardView();
