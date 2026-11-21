@@ -6,7 +6,7 @@
     </div>
     <div class="contact-banner-actions">
         {% if admin_contact and admin_contact.phone %}
-        <a class="contact-banner-link" href="tel:{{ admin_contact.phone_href }}">
+        <div class="contact-banner-link">
             <span class="contact-banner-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none">
                     <path d="M7 3h3l2 5-2 1.5a15 15 0 0 0 4.5 4.5L16 12l5 2v3c0 1.1-.9 2-2 2C10.7 19 5 13.3 5 6c0-1.7.8-3 2-3Z"
@@ -15,10 +15,10 @@
                 </svg>
             </span>
             <span><small>Gọi tư vấn</small><strong>{{ admin_contact.phone }}</strong></span>
-        </a>
+        </div>
         {% endif %}
         {% if admin_contact and admin_contact.email %}
-        <a class="contact-banner-link" href="mailto:{{ admin_contact.email }}">
+        <div class="contact-banner-link">
             <span class="contact-banner-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none">
                     <path d="M4 6h16v12H4zM4 7l8 6 8-6" stroke="currentColor"
@@ -26,7 +26,7 @@
                 </svg>
             </span>
             <span><small>Email hỗ trợ</small><strong>{{ admin_contact.email }}</strong></span>
-        </a>
+        </div>
         {% endif %}
         {% if not admin_contact or (not admin_contact.phone and not admin_contact.email) %}
         <p class="contact-banner-unavailable">Thông tin liên hệ đang được cập nhật.</p>

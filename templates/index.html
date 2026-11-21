@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% block content %}
-{% include "partials/contact_banner.html" %}
 <section class="catalog">
     <div class="catalog-heading">
         <div>
@@ -172,6 +171,7 @@
         {% endif %}
     </nav>
     {% endif %}
+    {% include "partials/contact_banner.html" %}
 </section>
 <script defer src="/static/js/product-banner.js"></script>
 {% endblock %}
