@@ -2,15 +2,12 @@ import os
 import secrets
 from urllib.parse import urlsplit
 
-from flask import flash, request
+from flask import current_app, flash, request
 from werkzeug.utils import secure_filename
 from database import text
 
 from controllers.admin.common import DashboardInputError, form_decimal, form_int, form_value
 
-IMAGE_UPLOAD_FOLDER = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "image"
-)
 ALLOWED_IMAGE_EXTENSIONS = {"gif", "jpeg", "jpg", "png", "webp"}
 MAX_IMAGE_SIZE = 5 * 1024 * 1024
 
@@ -56,8 +53,9 @@ def handle_action(connection, action):
                 raise DashboardInputError("Ảnh không được lớn hơn 5 MB.")
 
             stored_filename = f"{secrets.token_hex(16)}.{extension}"
-            os.makedirs(IMAGE_UPLOAD_FOLDER, exist_ok=True)
-            image.save(os.path.join(IMAGE_UPLOAD_FOLDER, stored_filename))
+            image_folder = current_app.config["IMAGE_FOLDER"]
+            os.makedirs(image_folder, exist_ok=True)
+            image.save(os.path.join(image_folder, stored_filename))
             values["main_image"] = f"/image/{stored_filename}"
 
         if action == "product-create":
