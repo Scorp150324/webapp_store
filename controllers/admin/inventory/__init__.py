@@ -535,10 +535,11 @@ def handle_action(connection, action):
             )
         connection.execute(
             text(
-                "UPDATE Products SET StockQuantity=COALESCE(StockQuantity, 0)-:quantity "
+                "UPDATE Products SET StockQuantity=COALESCE(StockQuantity, 0)-:quantity, "
+                "SellingPrice=:unit_price "
                 "WHERE ProductID=:product_id"
             ),
-            {"quantity": quantity, "product_id": product_id},
+            {"quantity": quantity, "unit_price": unit_price, "product_id": product_id},
         )
         connection.execute(
             text(

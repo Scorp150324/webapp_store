@@ -312,9 +312,9 @@
             <div class="inventory-layout">
                 <form class="dashboard-form inventory-form" method="post" action="{{ url_for('dashboard.action', action='inbound-create') }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><h4>Tạo phiếu nhập</h4>
-                    <label>Sản phẩm<select name="product_id" data-inbound-product required>{% for product in products %}<option value="{{ product.ProductID }}" data-cost-price="{{ product.CostPrice }}">{{ product.ProductName }}</option>{% endfor %}</select></label>
+                    <label>Sản phẩm<select name="product_id" required>{% for product in products %}<option value="{{ product.ProductID }}">{{ product.ProductName }}</option>{% endfor %}</select></label>
                     <label>Nhà cung cấp<select name="supplier_id"><option value="">Không chọn</option>{% for supplier in suppliers %}<option value="{{ supplier.SupplierID }}">{{ supplier.SupplierName }}</option>{% endfor %}</select></label>
-                    <div class="form-row"><label>Số lượng<input type="number" name="quantity" min="1" required></label><label>Giá nhập/đơn vị (₫)<input type="number" name="import_price" value="{{ "{:.0f}".format(products[0].CostPrice) if products else "0" }}" min="0" step="1" data-inbound-cost-input required></label></div>
+                    <div class="form-row"><label>Số lượng<input type="number" name="quantity" min="1" required></label><label>Giá nhập/đơn vị (₫)<input type="number" name="import_price" min="0" step="1" required></label></div>
                     <label>Serial<textarea name="serial_numbers" rows="4" placeholder="Mỗi mã serial một dòng. Nếu bật Quản lý serial, số mã phải khớp số lượng nhập. Mã không trùng, tối đa 100 ký tự. Ví dụ (SL 2):&#10;SN-001&#10;SN-002"></textarea></label>
                     <label>Ghi chú<textarea name="notes" rows="2"></textarea></label><button type="submit">Tạo phiếu nhập</button>
                 </form>
@@ -338,9 +338,9 @@
             <div class="inventory-layout">
                 <form class="dashboard-form inventory-form" method="post" action="{{ url_for('dashboard.action', action='outbound-create') }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><h4>Tạo đơn xuất hàng</h4>
-                    <label>Sản phẩm<select name="product_id" required>{% for product in products %}<option value="{{ product.ProductID }}">{{ product.ProductName }}</option>{% endfor %}</select></label>
+                    <label>Sản phẩm<select name="product_id" data-outbound-product required>{% for product in products %}<option value="{{ product.ProductID }}" data-selling-price="{{ product.SellingPrice }}">{{ product.ProductName }}</option>{% endfor %}</select></label>
                     <label>Khách hàng<select name="customer_id"><option value="">Khách lẻ</option>{% for customer in customers %}<option value="{{ customer.CustomerID }}">{{ customer.FullName }}</option>{% endfor %}</select></label>
-                    <div class="form-row"><label>Số lượng<input type="number" name="quantity" min="1" required></label><label>Đơn giá xuất (₫)<input type="number" name="unit_price" min="0" step="1" required></label></div>
+                    <div class="form-row"><label>Số lượng<input type="number" name="quantity" min="1" required></label><label>Đơn giá xuất (₫)<input type="number" name="unit_price" value="{{ "{:.0f}".format(products[0].SellingPrice) if products else "0" }}" min="0" step="1" data-outbound-price required></label></div>
                     <label>Thanh toán<select name="payment_method" required><option value="CASH">Tiền mặt</option><option value="BANK_TRANSFER">Chuyển khoản</option><option value="CARD">Thẻ</option><option value="MOMO">MoMo</option><option value="VNPAY">VNPay</option></select></label>
                     <label>Ghi chú<textarea name="notes" rows="2"></textarea></label><button type="submit">Tạo đơn xuất hàng</button>
                 </form>

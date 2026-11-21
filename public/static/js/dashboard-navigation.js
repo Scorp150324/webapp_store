@@ -45,14 +45,14 @@ function showDashboardView() {
     });
 }
 
-const inboundProduct = document.querySelector("[data-inbound-product]");
-const inboundCostInput = document.querySelector("[data-inbound-cost-input]");
-const updateInboundCost = () => {
-    const cost = Number(inboundProduct?.selectedOptions[0]?.dataset.costPrice);
-    if (inboundCostInput && Number.isFinite(cost)) inboundCostInput.value = String(Math.round(cost));
+const outboundProduct = document.querySelector("[data-outbound-product]");
+const outboundPriceInput = document.querySelector("[data-outbound-price]");
+const updateOutboundPrice = () => {
+    const price = Number(outboundProduct?.selectedOptions[0]?.dataset.sellingPrice);
+    if (outboundPriceInput && Number.isFinite(price)) outboundPriceInput.value = String(Math.round(price));
 };
-inboundProduct?.addEventListener("change", updateInboundCost);
-updateInboundCost();
+outboundProduct?.addEventListener("change", updateOutboundPrice);
+updateOutboundPrice();
 
 window.addEventListener("hashchange", showDashboardView);
 showDashboardView();
