@@ -29,6 +29,12 @@
             </button>
         </div>
 
+        {% if login_error_message %}
+        <p class="login-error-notice" role="alert" data-autohide="3000">
+            {{ login_error_message }}
+        </p>
+        {% endif %}
+
         {% if login_lock_info and not login_lock_info.get('failed') %}
         <p class="login-lock-notice" id="login-lock-notice"
            {% if not login_lock_info.get('admin_locked') %}data-lock-seconds="{{ login_lock_info.get('remaining', 0) }}"{% endif %}

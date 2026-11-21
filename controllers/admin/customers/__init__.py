@@ -81,7 +81,8 @@ def handle_action(connection, action):
     if action == "customer-restore":
         connection.execute(
             text(
-                "UPDATE Customers SET IsDeleted=0, DeletedAt=NULL "
+                "UPDATE Customers SET IsDeleted=0, DeletedAt=NULL, "
+                "LoginFailedAttempts=0, LoginLockLevel=0, LoginLockedUntil=0 "
                 "WHERE CustomerID=:id AND IsDeleted=1"
             ),
             {"id": form_int("id", minimum=1)},

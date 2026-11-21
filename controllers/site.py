@@ -314,6 +314,7 @@ def login():
 
     identity = ""
     customer_lock_info = None
+    login_error_message = None
     if request.method == "POST":
         identity = request.form.get("identity", "").strip()
         password = request.form.get("password", "")
@@ -387,14 +388,15 @@ def login():
             flash("Không thể kết nối cơ sở dữ liệu. Vui lòng thử lại sau.", "error")
             return render_template("login.html", identity=identity)
 
-        flash(
-            customer_lock_message(customer_lock_info)
-            or "Tên tài khoản, email, số điện thoại hoặc mật khẩu không đúng.",
-            "error",
-        )
+        lock_message = customer_lock_message(customer_lock_info)
+        if not lock_message:
+            login_error_message = "Tên tài khoản hoặc mật khẩu không đúng."
 
     return render_template(
-        "login.html", identity=identity, login_lock_info=customer_lock_info
+        "login.html",
+        identity=identity,
+        login_lock_info=customer_lock_info,
+        login_error_message=login_error_message,
     )
 
 

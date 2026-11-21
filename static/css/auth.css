@@ -220,7 +220,8 @@
     cursor: not-allowed;
 }
 
-.login-lock-notice {
+.login-lock-notice,
+.login-error-notice {
     margin: 0.25rem 0 0;
     padding: 0.6rem 0.75rem;
     border: 1px solid #fca5a5;

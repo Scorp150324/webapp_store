@@ -1,0 +1,4 @@
+ALTER TABLE `customers`
+  ADD COLUMN `LoginFailedAttempts` INT NOT NULL DEFAULT 0,
+  ADD COLUMN `LoginLockLevel` INT NOT NULL DEFAULT 0,
+  ADD COLUMN `LoginLockedUntil` BIGINT NOT NULL DEFAULT 0;
