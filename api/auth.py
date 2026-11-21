@@ -7,6 +7,7 @@ from flask import abort, jsonify, request, session
 from sqlalchemy.exc import SQLAlchemyError
 
 from api import api_bp
+from controllers.customer_login import authenticate_customer, customer_lock_message
 from database import engine, text
 
 logger = logging.getLogger(__name__)
@@ -39,59 +40,36 @@ def api_login():
     if not identity or not password or len(identity) > 100:
         abort(400, description="Vui lòng cung cấp identity và password hợp lệ.")
 
+    customer_lock_info = None
     try:
-        with engine.connect() as connection:
-            customer = connection.execute(
-                text(
-                    "SELECT CustomerID, FullName, PasswordHash "
-                    "FROM Customers "
-                    "WHERE (Username = :identity OR Phone = :identity "
-                    "OR Email = :identity) AND IsDeleted = 0 "
-                    "AND PasswordHash IS NOT NULL"
-                ),
-                {"identity": identity},
-            ).mappings().first()
-            if customer:
-                try:
-                    valid_password = bcrypt.checkpw(
-                        password.encode("utf-8"),
-                        customer["PasswordHash"].encode("utf-8"),
+        customer, customer_lock_info = authenticate_customer(identity, password)
+        if customer and not customer_lock_info:
+            try:
+                with engine.begin() as log_connection:
+                    log_connection.execute(
+                        text(
+                            "INSERT INTO Customer_Login_Logs "
+                            "(CustomerID, IPAddress, UserAgent) "
+                            "VALUES (:customer_id, :ip_address, :user_agent)"
+                        ),
+                        {
+                            "customer_id": customer["CustomerID"],
+                            "ip_address": request.remote_addr,
+                            "user_agent": request.user_agent.string[:255],
+                        },
                     )
-                except ValueError:
-                    logger.exception(
-                        "Hash mật khẩu khách hàng không hợp lệ (CustomerID=%s)",
-                        customer["CustomerID"],
-                    )
-                    valid_password = False
-                if valid_password:
-                    try:
-                        connection.execute(
-                            text(
-                                "INSERT INTO Customer_Login_Logs "
-                                "(CustomerID, IPAddress, UserAgent) "
-                                "VALUES (:customer_id, :ip_address, :user_agent)"
-                            ),
-                            {
-                                "customer_id": customer["CustomerID"],
-                                "ip_address": request.remote_addr,
-                                "user_agent": request.user_agent.string[:255],
-                            },
-                        )
-                        connection.commit()
-                    except SQLAlchemyError:
-                        connection.rollback()
-                        logger.exception("Không thể ghi nhật ký đăng nhập khách hàng")
-                    account = {
-                        "id": customer["CustomerID"],
-                        "type": "customer",
-                        "full_name": customer["FullName"],
-                    }
-                else:
-                    account = None
-            else:
-                account = None
+            except SQLAlchemyError:
+                logger.exception("Không thể ghi nhật ký đăng nhập khách hàng")
+            account = {
+                "id": customer["CustomerID"],
+                "type": "customer",
+                "full_name": customer["FullName"],
+            }
+        else:
+            account = None
 
-            if account is None:
+        if account is None:
+            with engine.connect() as connection:
                 user = connection.execute(
                     text(
                         "SELECT UserID, Username, PasswordHash, FullName, RoleID "
@@ -124,6 +102,8 @@ def api_login():
         abort(503, description="Không thể kết nối cơ sở dữ liệu lúc này.")
 
     if account is None:
+        if customer_lock_info and not customer_lock_info.get("failed"):
+            return jsonify(error={"code": "account_locked", "message": customer_lock_message(customer_lock_info)}), 423
         abort(401, description="Thông tin đăng nhập không đúng.")
 
     session.clear()

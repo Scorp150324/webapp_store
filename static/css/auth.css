@@ -33,13 +33,13 @@
 .auth-nav .auth-nav-link-primary {
     border-color: #fff;
     background: #fff;
-    color: #1d4ed8;
+    color: #000;
     box-shadow: 0 2px 6px rgb(15 23 42 / 12%);
 }
 
 .auth-nav .auth-nav-link-primary:hover {
     background: #eff6ff;
-    color: #1e40af;
+    color: #000;
 }
 
 .auth-nav button:hover {
@@ -202,6 +202,33 @@
 
 .auth-submit:hover {
     background: #1d4ed8;
+}
+
+.auth-form .auth-submit:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+}
+
+.auth-form input:disabled {
+    background: #f1f5f9;
+    color: #64748b;
+    cursor: not-allowed;
+}
+
+.password-visibility-toggle:disabled {
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.login-lock-notice {
+    margin: 0.25rem 0 0;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #fca5a5;
+    border-radius: 0.55rem;
+    background: #fef2f2;
+    color: #991b1b;
+    font-size: 0.9rem;
+    line-height: 1.5;
 }
 
 .auth-switch {

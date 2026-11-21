@@ -16,10 +16,12 @@
         <label for="password">Mật khẩu</label>
         <div class="password-input-wrap">
             <input id="password" name="password" type="password"
-                   autocomplete="current-password" required>
+                   autocomplete="current-password" required
+                   {% if login_lock_info and not login_lock_info.get('failed') %}disabled aria-describedby="login-lock-notice"{% endif %}>
             <button class="password-visibility-toggle" type="button"
                     aria-label="Hiện mật khẩu" aria-pressed="false"
-                    aria-controls="password" title="Hiện mật khẩu">
+                    aria-controls="password" title="Hiện mật khẩu"
+                    {% if login_lock_info and not login_lock_info.get('failed') %}disabled{% endif %}>
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                     <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
                     <circle cx="12" cy="12" r="3" />
@@ -27,7 +29,21 @@
             </button>
         </div>
 
-        <button class="auth-submit" type="submit">Đăng nhập</button>
+        {% if login_lock_info and not login_lock_info.get('failed') %}
+        <p class="login-lock-notice" id="login-lock-notice"
+           {% if not login_lock_info.get('admin_locked') %}data-lock-seconds="{{ login_lock_info.get('remaining', 0) }}"{% endif %}
+           {% if login_lock_info.get('admin_locked') %}data-autohide="5000"{% endif %}
+           role="status" aria-live="polite">
+            {% if login_lock_info.get('admin_locked') %}
+                Tài khoản này đã bị khóa. Vui lòng liên hệ quản lý để được hỗ trợ.
+            {% else %}
+            Tài khoản đang bị khóa. Bạn có thể thử lại sau <strong data-lock-countdown>{{ login_lock_info.get('remaining', 0) }}</strong> giây.
+            {% endif %}
+        </p>
+        {% endif %}
+
+        <button class="auth-submit" id="login-submit" type="submit"
+                {% if login_lock_info and not login_lock_info.get('failed') %}disabled{% endif %}>Đăng nhập</button>
     </form>
     <p class="auth-switch"><a href="{{ url_for('site.forgot_password') }}">Quên mật khẩu?</a></p>
     <p class="auth-switch">Chưa có tài khoản? <a href="{{ url_for('site.register') }}">Đăng ký ngay</a></p>
@@ -36,15 +52,46 @@
     (() => {
         const password = document.getElementById("password");
         const toggle = document.querySelector(".password-visibility-toggle");
-        if (!password || !toggle) return;
+        if (password && toggle) {
+            toggle.addEventListener("click", () => {
+                const shouldShow = password.type === "password";
+                password.type = shouldShow ? "text" : "password";
+                toggle.setAttribute("aria-pressed", String(shouldShow));
+                toggle.setAttribute("aria-label", shouldShow ? "Ẩn mật khẩu" : "Hiện mật khẩu");
+                toggle.title = shouldShow ? "Ẩn mật khẩu" : "Hiện mật khẩu";
+            });
+        }
 
-        toggle.addEventListener("click", () => {
-            const shouldShow = password.type === "password";
-            password.type = shouldShow ? "text" : "password";
-            toggle.setAttribute("aria-pressed", String(shouldShow));
-            toggle.setAttribute("aria-label", shouldShow ? "Ẩn mật khẩu" : "Hiện mật khẩu");
-            toggle.title = shouldShow ? "Ẩn mật khẩu" : "Hiện mật khẩu";
+        const notice = document.getElementById("login-lock-notice");
+        const countdown = notice?.querySelector("[data-lock-countdown]");
+        if (!notice || !password) return;
+
+        const identity = document.getElementById("identity");
+        const submit = document.getElementById("login-submit");
+        let interval = null;
+        const enableForm = () => {
+            if (interval) window.clearInterval(interval);
+            notice.remove();
+            password.disabled = false;
+            password.removeAttribute("aria-describedby");
+            if (toggle) toggle.disabled = false;
+            if (submit) submit.disabled = false;
+        };
+
+        const lockedIdentity = identity?.value.trim().toLocaleLowerCase();
+        identity?.addEventListener("input", () => {
+            if (identity.value.trim().toLocaleLowerCase() !== lockedIdentity) {
+                enableForm();
+            }
         });
+
+        if (!countdown) return;
+        let remaining = Number(notice.dataset.lockSeconds || 0);
+        interval = window.setInterval(() => {
+            remaining -= 1;
+            countdown.textContent = String(Math.max(remaining, 0));
+            if (remaining <= 0) enableForm();
+        }, 1000);
     })();
 </script>
 {% endblock %}

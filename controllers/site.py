@@ -22,6 +22,7 @@ from database import (
     text,
 )
 from controllers.contact import get_admin_contact
+from controllers.customer_login import authenticate_customer, customer_lock_message
 
 logger = logging.getLogger(__name__)
 site_bp = Blueprint("site", __name__)
@@ -312,6 +313,7 @@ def login():
         return redirect(url_for("site.index"))
 
     identity = ""
+    customer_lock_info = None
     if request.method == "POST":
         identity = request.form.get("identity", "").strip()
         password = request.form.get("password", "")
@@ -321,62 +323,36 @@ def login():
             return render_template("login.html", identity=identity)
 
         try:
+            customer, customer_lock_info = authenticate_customer(identity, password)
+            if customer and not customer_lock_info:
+                try:
+                    with engine.begin() as log_connection:
+                        log_connection.execute(
+                            text(
+                                "INSERT INTO Customer_Login_Logs "
+                                "(CustomerID, IPAddress, UserAgent) "
+                                "VALUES (:customer_id, :ip_address, :user_agent)"
+                            ),
+                            {
+                                "customer_id": customer["CustomerID"],
+                                "ip_address": request.remote_addr,
+                                "user_agent": request.user_agent.string[:255],
+                            },
+                        )
+                except SQLAlchemyError:
+                    logger.exception("Không thể ghi nhật ký đăng nhập khách hàng")
+
+                session.clear()
+                session["user_id"] = customer["CustomerID"]
+                session["user_type"] = "customer"
+                session["full_name"] = customer["FullName"]
+                flash(
+                    f"Đăng nhập thành công. Xin chào {customer['FullName']}!",
+                    "login-success",
+                )
+                return redirect(url_for("site.index"))
+
             with engine.connect() as connection:
-                customer = connection.execute(
-                    text(
-                        "SELECT CustomerID, FullName, PasswordHash "
-                        "FROM Customers "
-                        "WHERE (Username = :identity OR Phone = :identity "
-                        "OR Email = :identity) "
-                        "AND IsDeleted = 0 AND PasswordHash IS NOT NULL"
-                    ),
-                    {"identity": identity},
-                ).mappings().first()
-
-                if customer:
-                    try:
-                        password_matches = bcrypt.checkpw(
-                            password.encode("utf-8"),
-                            customer["PasswordHash"].encode("utf-8"),
-                        )
-                    except ValueError:
-                        logger.exception(
-                            "Hash mật khẩu khách hàng không hợp lệ (CustomerID=%s)",
-                            customer["CustomerID"],
-                        )
-                        password_matches = False
-
-                    if password_matches:
-                        try:
-                            connection.execute(
-                                text(
-                                    "INSERT INTO Customer_Login_Logs "
-                                    "(CustomerID, IPAddress, UserAgent) "
-                                    "VALUES (:customer_id, :ip_address, :user_agent)"
-                                ),
-                                {
-                                    "customer_id": customer["CustomerID"],
-                                    "ip_address": request.remote_addr,
-                                    "user_agent": request.user_agent.string[:255],
-                                },
-                            )
-                            connection.commit()
-                        except SQLAlchemyError:
-                            connection.rollback()
-                            logger.exception(
-                                "Không thể ghi nhật ký đăng nhập khách hàng"
-                            )
-
-                        session.clear()
-                        session["user_id"] = customer["CustomerID"]
-                        session["user_type"] = "customer"
-                        session["full_name"] = customer["FullName"]
-                        flash(
-                            f"Đăng nhập thành công. Xin chào {customer['FullName']}!",
-                            "login-success",
-                        )
-                        return redirect(url_for("site.index"))
-
                 user = connection.execute(
                     text(
                         "SELECT UserID, Username, PasswordHash, FullName, RoleID "
@@ -411,9 +387,15 @@ def login():
             flash("Không thể kết nối cơ sở dữ liệu. Vui lòng thử lại sau.", "error")
             return render_template("login.html", identity=identity)
 
-        flash("Tên tài khoản, email, số điện thoại hoặc mật khẩu không đúng.", "error")
+        flash(
+            customer_lock_message(customer_lock_info)
+            or "Tên tài khoản, email, số điện thoại hoặc mật khẩu không đúng.",
+            "error",
+        )
 
-    return render_template("login.html", identity=identity)
+    return render_template(
+        "login.html", identity=identity, login_lock_info=customer_lock_info
+    )
 
 
 @site_bp.route("/forgot-password", methods=["GET", "POST"])
