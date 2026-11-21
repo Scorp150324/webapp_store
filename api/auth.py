@@ -65,20 +65,21 @@ def api_login():
                     valid_password = False
                 if valid_password:
                     try:
-                        with engine.begin() as log_connection:
-                            log_connection.execute(
-                                text(
-                                    "INSERT INTO Customer_Login_Logs "
-                                    "(CustomerID, IPAddress, UserAgent) "
-                                    "VALUES (:customer_id, :ip_address, :user_agent)"
-                                ),
-                                {
-                                    "customer_id": customer["CustomerID"],
-                                    "ip_address": request.remote_addr,
-                                    "user_agent": request.user_agent.string[:255],
-                                },
-                            )
+                        connection.execute(
+                            text(
+                                "INSERT INTO Customer_Login_Logs "
+                                "(CustomerID, IPAddress, UserAgent) "
+                                "VALUES (:customer_id, :ip_address, :user_agent)"
+                            ),
+                            {
+                                "customer_id": customer["CustomerID"],
+                                "ip_address": request.remote_addr,
+                                "user_agent": request.user_agent.string[:255],
+                            },
+                        )
+                        connection.commit()
                     except SQLAlchemyError:
+                        connection.rollback()
                         logger.exception("Không thể ghi nhật ký đăng nhập khách hàng")
                     account = {
                         "id": customer["CustomerID"],

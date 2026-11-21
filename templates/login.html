@@ -14,12 +14,37 @@
                autocomplete="username" maxlength="100" required>
 
         <label for="password">Mật khẩu</label>
-        <input id="password" name="password" type="password"
-               autocomplete="current-password" required>
+        <div class="password-input-wrap">
+            <input id="password" name="password" type="password"
+                   autocomplete="current-password" required>
+            <button class="password-visibility-toggle" type="button"
+                    aria-label="Hiện mật khẩu" aria-pressed="false"
+                    aria-controls="password" title="Hiện mật khẩu">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+                    <circle cx="12" cy="12" r="3" />
+                </svg>
+            </button>
+        </div>
 
         <button class="auth-submit" type="submit">Đăng nhập</button>
     </form>
     <p class="auth-switch"><a href="{{ url_for('site.forgot_password') }}">Quên mật khẩu?</a></p>
     <p class="auth-switch">Chưa có tài khoản? <a href="{{ url_for('site.register') }}">Đăng ký ngay</a></p>
 </section>
+<script>
+    (() => {
+        const password = document.getElementById("password");
+        const toggle = document.querySelector(".password-visibility-toggle");
+        if (!password || !toggle) return;
+
+        toggle.addEventListener("click", () => {
+            const shouldShow = password.type === "password";
+            password.type = shouldShow ? "text" : "password";
+            toggle.setAttribute("aria-pressed", String(shouldShow));
+            toggle.setAttribute("aria-label", shouldShow ? "Ẩn mật khẩu" : "Hiện mật khẩu");
+            toggle.title = shouldShow ? "Ẩn mật khẩu" : "Hiện mật khẩu";
+        });
+    })();
+</script>
 {% endblock %}

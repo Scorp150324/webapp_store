@@ -11,7 +11,8 @@ body.bg-gray-50 {
     background-attachment: fixed;
 }
 
-body.bg-gray-50.homepage-body {
+body.bg-gray-50.homepage-body,
+body.bg-gray-50.auth-tech-body {
     background-color: #081a38;
     background-image:
         radial-gradient(ellipse at 10% 12%, rgb(37 99 235 / 36%), transparent 34rem),
