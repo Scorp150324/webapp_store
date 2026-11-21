@@ -5,6 +5,13 @@ from database import text
 from controllers.admin.common import DashboardInputError, form_int, form_value
 
 
+def _validate_role(connection, role_id):
+    if not connection.execute(
+        text("SELECT 1 FROM Roles WHERE RoleID=:role_id"), {"role_id": role_id}
+    ).first():
+        raise DashboardInputError("Vai trò đã chọn không tồn tại.")
+
+
 def handle_action(connection, action):
     if action == "employee-create":
         full_name = form_value("full_name", required=True, maximum=100)
@@ -12,6 +19,7 @@ def handle_action(connection, action):
         email = form_value("email", maximum=100) or None
         phone = form_value("phone", maximum=20) or None
         role_id = form_int("role_id", minimum=1)
+        _validate_role(connection, role_id)
         password = request.form.get("password", "")
         if len(password) < 8 or len(password.encode("utf-8")) > 72:
             raise DashboardInputError(
@@ -40,6 +48,7 @@ def handle_action(connection, action):
     if action == "employee-update":
         user_id = form_int("id", minimum=1)
         role_id = form_int("role_id", minimum=1)
+        _validate_role(connection, role_id)
         values = {
             "id": user_id,
             "role_id": role_id,

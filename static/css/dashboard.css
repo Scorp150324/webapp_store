@@ -478,6 +478,23 @@ body.dashboard-tech-body .dashboard-title .dashboard-eyebrow {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.role-create-form {
+    align-items: end;
+}
+
+.role-create-form input,
+.role-create-form button {
+    height: 2.5rem;
+    box-sizing: border-box;
+}
+
+.role-create-form button {
+    width: auto;
+    min-width: 8rem;
+    justify-self: start;
+    padding: 0.6rem 1rem;
+}
+
 .dashboard-form label,
 .inline-edit-form label {
     display: grid;
@@ -592,6 +609,19 @@ body.dashboard-tech-body .dashboard-title .dashboard-eyebrow {
     font-weight: 650;
 }
 
+.dashboard-help-text {
+    margin: -0.25rem 0 1rem;
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.role-protected-label {
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
 .cell-sub {
     display: block;
     margin-top: 0.25rem;
@@ -630,6 +660,19 @@ body.dashboard-tech-body .dashboard-title .dashboard-eyebrow {
     background: #fff;
     box-shadow: 0 12px 28px rgb(15 23 42 / 16%);
     white-space: normal;
+}
+
+.employee-edit-form {
+    position: fixed;
+    z-index: 1000;
+    top: 50%;
+    right: auto;
+    left: 50%;
+    width: min(28rem, calc(100vw - 2rem));
+    max-height: min(80vh, 48rem);
+    max-height: min(80dvh, 48rem);
+    box-sizing: border-box;
+    transform: translate(-50%, -50%);
 }
 
 .product-edit-form {

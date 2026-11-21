@@ -7,6 +7,176 @@ from database import insert_id, text
 from controllers.admin.common import DashboardInputError, form_decimal, form_int, form_value
 
 
+def _lock_product(connection, product_id):
+    return connection.execute(
+        text(
+            "SELECT ProductID, StockQuantity, IsHasSerial FROM Products "
+            "WHERE ProductID=:id FOR UPDATE"
+        ),
+        {"id": product_id},
+    ).mappings().first()
+
+
+def _reverse_inbound_stock(connection, inbound_id):
+    details = connection.execute(
+        text(
+            "SELECT InboundDetailID, ProductID, Quantity FROM Inbound_Details "
+            "WHERE InboundID=:id ORDER BY InboundDetailID FOR UPDATE"
+        ),
+        {"id": inbound_id},
+    ).mappings().all()
+    for detail in details:
+        product = _lock_product(connection, detail["ProductID"])
+        quantity = detail["Quantity"]
+        if not product or (product["StockQuantity"] or 0) < quantity:
+            raise DashboardInputError(
+                "Không thể hủy phiếu nhập vì tồn kho hiện tại không đủ để hoàn tác."
+            )
+
+        serials = connection.execute(
+            text(
+                "SELECT SerialID, Status, OrderDetailID FROM Product_Serials "
+                "WHERE InboundDetailID=:detail_id FOR UPDATE"
+            ),
+            {"detail_id": detail["InboundDetailID"]},
+        ).mappings().all()
+        if any(row["Status"] != "AVAILABLE" or row["OrderDetailID"] is not None for row in serials):
+            raise DashboardInputError(
+                "Không thể hủy phiếu nhập vì serial của phiếu đã được xuất hoặc thay đổi."
+            )
+
+        connection.execute(
+            text(
+                "UPDATE Products SET StockQuantity=COALESCE(StockQuantity, 0)-:quantity "
+                "WHERE ProductID=:product_id"
+            ),
+            {"quantity": quantity, "product_id": detail["ProductID"]},
+        )
+        if serials:
+            connection.execute(
+                text(
+                    "UPDATE Product_Serials SET Status='REMOVED' "
+                    "WHERE InboundDetailID=:detail_id AND Status='AVAILABLE'"
+                ),
+                {"detail_id": detail["InboundDetailID"]},
+            )
+
+
+def _apply_inbound_stock(connection, inbound_id):
+    details = connection.execute(
+        text(
+            "SELECT InboundDetailID, ProductID, Quantity FROM Inbound_Details "
+            "WHERE InboundID=:id ORDER BY InboundDetailID FOR UPDATE"
+        ),
+        {"id": inbound_id},
+    ).mappings().all()
+    for detail in details:
+        if not _lock_product(connection, detail["ProductID"]):
+            raise DashboardInputError("Không tìm thấy sản phẩm trong phiếu nhập.")
+        connection.execute(
+            text(
+                "UPDATE Products SET StockQuantity=COALESCE(StockQuantity, 0)+:quantity "
+                "WHERE ProductID=:product_id"
+            ),
+            {"quantity": detail["Quantity"], "product_id": detail["ProductID"]},
+        )
+        connection.execute(
+            text(
+                "UPDATE Product_Serials SET Status='AVAILABLE' "
+                "WHERE InboundDetailID=:detail_id AND Status='REMOVED'"
+            ),
+            {"detail_id": detail["InboundDetailID"]},
+        )
+
+
+def _reverse_outbound_stock(connection, order_id):
+    details = connection.execute(
+        text(
+            "SELECT OrderDetailID, ProductID, Quantity FROM Order_Details "
+            "WHERE OrderID=:id ORDER BY OrderDetailID FOR UPDATE"
+        ),
+        {"id": order_id},
+    ).mappings().all()
+    for detail in details:
+        product = _lock_product(connection, detail["ProductID"])
+        if not product:
+            raise DashboardInputError("Không tìm thấy sản phẩm trong đơn xuất.")
+        serials = connection.execute(
+            text(
+                "SELECT SerialID, Status FROM Product_Serials "
+                "WHERE OrderDetailID=:detail_id FOR UPDATE"
+            ),
+            {"detail_id": detail["OrderDetailID"]},
+        ).mappings().all()
+        if product["IsHasSerial"] and (
+            len(serials) != detail["Quantity"]
+            or any(row["Status"] != "SOLD" for row in serials)
+        ):
+            raise DashboardInputError(
+                "Không thể hoàn tác đơn xuất vì serial đã được sử dụng hoặc thay đổi."
+            )
+
+        connection.execute(
+            text(
+                "UPDATE Products SET StockQuantity=COALESCE(StockQuantity, 0)+:quantity "
+                "WHERE ProductID=:product_id"
+            ),
+            {"quantity": detail["Quantity"], "product_id": detail["ProductID"]},
+        )
+        connection.execute(
+            text(
+                "UPDATE Product_Serials SET Status='AVAILABLE', OrderDetailID=NULL "
+                "WHERE OrderDetailID=:detail_id AND Status='SOLD'"
+            ),
+            {"detail_id": detail["OrderDetailID"]},
+        )
+
+
+def _apply_outbound_stock(connection, order_id):
+    details = connection.execute(
+        text(
+            "SELECT OrderDetailID, ProductID, Quantity FROM Order_Details "
+            "WHERE OrderID=:id ORDER BY OrderDetailID FOR UPDATE"
+        ),
+        {"id": order_id},
+    ).mappings().all()
+    for detail in details:
+        product = _lock_product(connection, detail["ProductID"])
+        quantity = detail["Quantity"]
+        if not product or (product["StockQuantity"] or 0) < quantity:
+            raise DashboardInputError("Không đủ tồn kho để khôi phục đơn xuất này.")
+
+        if product["IsHasSerial"]:
+            serials = connection.execute(
+                text(
+                    "SELECT SerialID FROM Product_Serials "
+                    "WHERE ProductID=:product_id AND Status='AVAILABLE' "
+                    "ORDER BY SerialID LIMIT :quantity FOR UPDATE"
+                ),
+                {"product_id": detail["ProductID"], "quantity": quantity},
+            ).mappings().all()
+            if len(serials) != quantity:
+                raise DashboardInputError(
+                    "Không đủ serial khả dụng để khôi phục đơn xuất này."
+                )
+            for serial in serials:
+                connection.execute(
+                    text(
+                        "UPDATE Product_Serials SET Status='SOLD', OrderDetailID=:detail_id "
+                        "WHERE SerialID=:serial_id AND Status='AVAILABLE'"
+                    ),
+                    {"detail_id": detail["OrderDetailID"], "serial_id": serial["SerialID"]},
+                )
+
+        connection.execute(
+            text(
+                "UPDATE Products SET StockQuantity=COALESCE(StockQuantity, 0)-:quantity "
+                "WHERE ProductID=:product_id"
+            ),
+            {"quantity": quantity, "product_id": detail["ProductID"]},
+        )
+
+
 def handle_action(connection, action):
     if action == "inbound-update":
         inbound_id = form_int("id", minimum=1)
@@ -16,14 +186,18 @@ def handle_action(connection, action):
             raise DashboardInputError("Trạng thái phiếu nhập không hợp lệ.")
         note = connection.execute(
             text(
-                "SELECT InboundID FROM Inbound_Notes "
+                "SELECT InboundID, Status FROM Inbound_Notes "
                 "WHERE InboundID=:id AND COALESCE(Status, '') NOT LIKE 'DELETED%' "
                 "FOR UPDATE"
             ),
             {"id": inbound_id},
-        ).first()
+        ).mappings().first()
         if not note:
             raise DashboardInputError("Không tìm thấy phiếu nhập đang hoạt động.")
+        if note["Status"] == "COMPLETED" and status != "COMPLETED":
+            _reverse_inbound_stock(connection, inbound_id)
+        elif note["Status"] != "COMPLETED" and status == "COMPLETED":
+            _apply_inbound_stock(connection, inbound_id)
         connection.execute(
             text(
                 "UPDATE Inbound_Notes SET SupplierID=:supplier_id, Status=:status, "
@@ -37,7 +211,7 @@ def handle_action(connection, action):
                 "id": inbound_id,
             },
         )
-        flash(f"Đã cập nhật phiếu nhập #{inbound_id}.", "success")
+        flash(f"Đã cập nhật phiếu nhập #{inbound_id}. Tồn kho được đồng bộ theo trạng thái.", "success")
         return
 
     if action == "inbound-delete":
@@ -55,6 +229,8 @@ def handle_action(connection, action):
         deleted_status = note["Status"]
         if deleted_status not in {"DRAFT", "COMPLETED", "CANCELLED"}:
             deleted_status = "COMPLETED"
+        if deleted_status == "COMPLETED":
+            _reverse_inbound_stock(connection, inbound_id)
         connection.execute(
             text(
                 "UPDATE Inbound_Notes SET Status=:deleted_status "
@@ -62,7 +238,12 @@ def handle_action(connection, action):
             ),
             {"id": inbound_id, "deleted_status": f"DELETED:{deleted_status}"},
         )
-        flash(f"Đã ẩn phiếu nhập #{inbound_id}. Tồn kho không thay đổi.", "success")
+        message = (
+            "số lượng đã được trừ khỏi tồn kho"
+            if deleted_status == "COMPLETED"
+            else "tồn kho không thay đổi"
+        )
+        flash(f"Đã ẩn phiếu nhập #{inbound_id}; {message}.", "success")
         return
 
     if action == "inbound-restore":
@@ -80,6 +261,8 @@ def handle_action(connection, action):
         _, separator, previous_status = (note["Status"] or "").partition(":")
         if not separator or previous_status not in {"DRAFT", "COMPLETED", "CANCELLED"}:
             previous_status = "COMPLETED"
+        if previous_status == "COMPLETED":
+            _apply_inbound_stock(connection, inbound_id)
         connection.execute(
             text(
                 "UPDATE Inbound_Notes SET Status=:status "
@@ -87,7 +270,12 @@ def handle_action(connection, action):
             ),
             {"id": inbound_id, "status": previous_status},
         )
-        flash(f"Đã khôi phục phiếu nhập #{inbound_id}. Tồn kho không thay đổi.", "success")
+        message = (
+            "số lượng đã được cộng lại vào tồn kho"
+            if previous_status == "COMPLETED"
+            else "tồn kho không thay đổi"
+        )
+        flash(f"Đã khôi phục phiếu nhập #{inbound_id}; {message}.", "success")
         return
 
     if action == "outbound-update":
@@ -97,14 +285,18 @@ def handle_action(connection, action):
             raise DashboardInputError("Trạng thái đơn xuất không hợp lệ.")
         order = connection.execute(
             text(
-                "SELECT OrderID FROM Orders "
+                "SELECT OrderID, OrderStatus FROM Orders "
                 "WHERE OrderID=:id AND COALESCE(OrderStatus, '') NOT LIKE 'DELETED%' "
                 "FOR UPDATE"
             ),
             {"id": order_id},
-        ).first()
+        ).mappings().first()
         if not order:
             raise DashboardInputError("Không tìm thấy đơn xuất đang hoạt động.")
+        if order["OrderStatus"] == "CANCELLED" and status != "CANCELLED":
+            _apply_outbound_stock(connection, order_id)
+        elif order["OrderStatus"] != "CANCELLED" and status == "CANCELLED":
+            _reverse_outbound_stock(connection, order_id)
         connection.execute(
             text(
                 "UPDATE Orders SET OrderStatus=:status, Notes=:notes "
@@ -116,7 +308,7 @@ def handle_action(connection, action):
                 "id": order_id,
             },
         )
-        flash(f"Đã cập nhật đơn xuất #{order_id}.", "success")
+        flash(f"Đã cập nhật đơn xuất #{order_id}. Tồn kho được đồng bộ theo trạng thái.", "success")
         return
 
     if action == "outbound-delete":
@@ -134,6 +326,8 @@ def handle_action(connection, action):
         deleted_status = order["OrderStatus"]
         if deleted_status not in {"PENDING", "PAID", "SHIPPED", "COMPLETED", "CANCELLED"}:
             deleted_status = "PAID"
+        if deleted_status != "CANCELLED":
+            _reverse_outbound_stock(connection, order_id)
         connection.execute(
             text(
                 "UPDATE Orders SET OrderStatus=:deleted_status "
@@ -141,7 +335,12 @@ def handle_action(connection, action):
             ),
             {"id": order_id, "deleted_status": f"DELETED:{deleted_status}"},
         )
-        flash(f"Đã ẩn đơn xuất #{order_id}. Tồn kho không thay đổi.", "success")
+        message = (
+            "hàng đã được cộng lại vào tồn kho"
+            if deleted_status != "CANCELLED"
+            else "tồn kho không thay đổi"
+        )
+        flash(f"Đã ẩn đơn xuất #{order_id}; {message}.", "success")
         return
 
     if action == "outbound-restore":
@@ -161,6 +360,8 @@ def handle_action(connection, action):
             "PENDING", "PAID", "SHIPPED", "COMPLETED", "CANCELLED"
         }:
             previous_status = "PAID"
+        if previous_status != "CANCELLED":
+            _apply_outbound_stock(connection, order_id)
         connection.execute(
             text(
                 "UPDATE Orders SET OrderStatus=:status "
@@ -168,7 +369,12 @@ def handle_action(connection, action):
             ),
             {"id": order_id, "status": previous_status},
         )
-        flash(f"Đã khôi phục đơn xuất #{order_id}. Tồn kho không thay đổi.", "success")
+        message = (
+            "hàng đã được trừ khỏi tồn kho"
+            if previous_status != "CANCELLED"
+            else "tồn kho không thay đổi"
+        )
+        flash(f"Đã khôi phục đơn xuất #{order_id}; {message}.", "success")
         return
 
     if action == "inbound-create":
@@ -257,7 +463,7 @@ def handle_action(connection, action):
             raise DashboardInputError("Phương thức thanh toán không hợp lệ.")
         product = connection.execute(
             text(
-                "SELECT SellingPrice, StockQuantity, IsHasSerial FROM Products "
+                "SELECT ProductName, SellingPrice, StockQuantity, IsHasSerial FROM Products "
                 "WHERE ProductID=:id AND IsDeleted=0 FOR UPDATE"
             ),
             {"id": product_id},
@@ -279,7 +485,8 @@ def handle_action(connection, action):
             ).mappings().all()
             if len(available_serials) != quantity:
                 raise DashboardInputError(
-                    "Không đủ serial còn khả dụng để xuất sản phẩm này."
+                    f"Sản phẩm {product['ProductName']} chỉ còn "
+                    f"{len(available_serials)} serial khả dụng; bạn đang xuất {quantity}."
                 )
 
         amount = Decimal(product["SellingPrice"]) * quantity

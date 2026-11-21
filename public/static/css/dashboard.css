@@ -592,6 +592,19 @@
     white-space: normal;
 }
 
+.employee-edit-form {
+    position: fixed;
+    z-index: 1000;
+    top: 50%;
+    right: auto;
+    left: 50%;
+    width: min(28rem, calc(100vw - 2rem));
+    max-height: min(80vh, 48rem);
+    max-height: min(80dvh, 48rem);
+    box-sizing: border-box;
+    transform: translate(-50%, -50%);
+}
+
 .product-edit-form {
     width: min(30rem, 85vw);
     grid-template-columns: repeat(2, minmax(0, 1fr));

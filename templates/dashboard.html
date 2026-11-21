@@ -18,6 +18,7 @@
             <a href="#overview">Tổng quan</a>
             <a href="#analytics-section">Thống kê</a>
             <a href="#employees-section">Nhân viên</a>
+            {% if session.get("role_id") == 1 %}<a href="#roles-section">Vai trò</a>{% endif %}
             <a href="#customers-section">Khách hàng</a>
             <a href="#products-section">Sản phẩm</a>
             <a href="#inbound-section">Nhập kho</a>
@@ -105,7 +106,7 @@
                     <label>Tên đăng nhập<input name="username" maxlength="50" required></label>
                     <label>Email<input type="email" name="email" maxlength="100"></label>
                     <label>Số điện thoại<input name="phone" maxlength="20"></label>
-                    <label>Vai trò<select name="role_id" required>{% for role in roles %}<option value="{{ role.RoleID }}">{{ role.RoleName }}</option>{% endfor %}</select></label>
+                    <label>Vai trò<select name="role_id" required><option value="" disabled selected>Chọn vai trò</option>{% for role in roles %}<option value="{{ role.RoleID }}">{{ role_labels.get(role.RoleName, role.RoleName) }}</option>{% endfor %}</select></label>
                     <label>Mật khẩu tạm<input type="password" name="password" minlength="8" maxlength="72" required></label>
                     <button type="submit">Tạo nhân viên</button>
                 </form>
@@ -116,17 +117,17 @@
                     <thead><tr><th>Nhân viên</th><th>Tài khoản</th><th>Vai trò</th><th>Liên hệ</th>{% if session.get("role_id") == 1 %}<th>Thao tác</th>{% endif %}</tr></thead>
                     <tbody>{% for employee in employees %}
                     <tr>
-                        <td>{{ employee.FullName }}</td><td>{{ employee.Username }}</td><td><span class="role-pill">{{ employee.RoleName or "Chưa phân quyền" }}</span></td>
+                        <td>{{ employee.FullName }}</td><td>{{ employee.Username }}</td><td><span class="role-pill">{{ role_labels.get(employee.RoleName, employee.RoleName) if employee.RoleName else "Chưa phân quyền" }}</span></td>
                         <td>{{ employee.Email or "—" }}<small class="cell-sub">{{ employee.Phone or "" }}</small></td>
                         {% if session.get("role_id") == 1 %}
                         <td class="table-actions"><div class="transaction-actions">
-                            <details><summary class="action-button action-button-edit">Sửa</summary>
-                                <form class="inline-edit-form" method="post" action="{{ url_for('dashboard.action', action='employee-update') }}">
+                            <details class="employee-edit-details"><summary class="action-button action-button-edit">Sửa</summary>
+                                <form class="inline-edit-form employee-edit-form" method="post" action="{{ url_for('dashboard.action', action='employee-update') }}">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ employee.UserID }}">
                                     <label>Họ tên<input name="full_name" value="{{ employee.FullName }}" maxlength="100" required></label>
                                     <label>Email<input type="email" name="email" value="{{ employee.Email or '' }}" maxlength="100"></label>
                                     <label>Điện thoại<input name="phone" value="{{ employee.Phone or '' }}" maxlength="20"></label>
-                                    <label>Vai trò<select name="role_id">{% for role in roles %}<option value="{{ role.RoleID }}" {% if role.RoleID == employee.RoleID %}selected{% endif %}>{{ role.RoleName }}</option>{% endfor %}</select></label>
+                                    <label>Vai trò<select name="role_id">{% for role in roles %}<option value="{{ role.RoleID }}" {% if role.RoleID == employee.RoleID %}selected{% endif %}>{{ role_labels.get(role.RoleName, role.RoleName) }}</option>{% endfor %}</select></label>
                                     <label>Mật khẩu mới<input type="password" name="password" minlength="8" maxlength="72" placeholder="Để trống nếu không đổi"></label>
                                     <button class="action-button action-button-save" type="submit">Lưu thay đổi</button>
                                 </form>
@@ -147,7 +148,7 @@
                 <div class="dashboard-table-wrap"><table class="dashboard-table">
                     <thead><tr><th>Nhân viên</th><th>Tài khoản</th><th>Vai trò</th><th>Liên hệ</th><th>Ngày khóa</th><th>Thao tác</th></tr></thead>
                     <tbody>{% for employee in hidden_employees %}<tr>
-                        <td>{{ employee.FullName }}</td><td>{{ employee.Username }}</td><td>{{ employee.RoleName or "Chưa phân quyền" }}</td>
+                        <td>{{ employee.FullName }}</td><td>{{ employee.Username }}</td><td>{{ role_labels.get(employee.RoleName, employee.RoleName) if employee.RoleName else "Chưa phân quyền" }}</td>
                         <td>{{ employee.Email or "—" }}<small class="cell-sub">{{ employee.Phone or "" }}</small></td>
                         <td>{{ employee.DeletedAt or "—" }}</td>
                         <td class="table-actions"><form method="post" action="{{ url_for('dashboard.action', action='employee-restore') }}" onsubmit="return confirm('Khôi phục tài khoản nhân viên này?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ employee.UserID }}"><button class="action-button action-button-save" type="submit">Khôi phục</button></form></td>
@@ -156,6 +157,60 @@
             </details>
             {% endif %}
         </section>
+
+        {% if session.get("role_id") == 1 %}
+        <section class="dashboard-panel" id="roles-section" data-dashboard-view="roles">
+            <div class="panel-heading">
+                <div><p class="dashboard-eyebrow">TÀI KHOẢN NỘI BỘ</p><h3>Quản lý vai trò</h3></div>
+                <span>{{ roles|length }} vai trò</span>
+            </div>
+            <p class="dashboard-help-text">Vai trò mới dùng để phân loại nhân viên. Quyền truy cập quản trị hiện vẫn theo các vai trò hệ thống.</p>
+            <details class="dashboard-create">
+                <summary>+ Thêm vai trò</summary>
+                <form class="dashboard-form dashboard-form-grid role-create-form" method="post" action="{{ url_for('dashboard.action', action='role-create') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label>Tên vai trò<input name="role_name" maxlength="50" required></label>
+                    <label>Mô tả<input name="description" maxlength="255"></label>
+                    <button type="submit">Thêm vai trò</button>
+                </form>
+            </details>
+            <div class="dashboard-table-wrap">
+                <table class="dashboard-table">
+                    <thead><tr><th>Vai trò</th><th>Mô tả</th><th>Tài khoản được gán</th><th>Thao tác</th></tr></thead>
+                    <tbody>{% for role in roles %}
+                    <tr>
+                        <td><span class="role-pill">{{ role_labels.get(role.RoleName, role.RoleName) }}</span></td>
+                        <td>{{ role.Description or "—" }}</td>
+                        <td>{{ role.EmployeeCount }}</td>
+                        <td class="table-actions"><div class="transaction-actions">
+                            <details><summary class="action-button action-button-edit">Sửa</summary>
+                                <form class="inline-edit-form" method="post" action="{{ url_for('dashboard.action', action='role-update') }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                    <input type="hidden" name="id" value="{{ role.RoleID }}">
+                                    {% if role.RoleID == 1 %}
+                                    <input type="hidden" name="role_name" value="{{ role.RoleName }}">
+                                    <label>Tên vai trò<input value="{{ role_labels.get(role.RoleName, role.RoleName) }}" disabled></label>
+                                    {% else %}
+                                    <label>Tên vai trò<input name="role_name" value="{{ role.RoleName }}" maxlength="50" required></label>
+                                    {% endif %}
+                                    <label>Mô tả<input name="description" value="{{ role.Description or '' }}" maxlength="255"></label>
+                                    <button class="action-button action-button-save" type="submit">Lưu thay đổi</button>
+                                </form>
+                            </details>
+                            {% if role.RoleID == 1 %}
+                            {% else %}
+                            <form method="post" action="{{ url_for('dashboard.action', action='role-delete') }}" onsubmit="return confirm('Xóa vai trò này? Vai trò đang được nhân viên sử dụng không thể xóa.');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <input type="hidden" name="id" value="{{ role.RoleID }}">
+                                <button class="action-button action-button-delete" type="submit">Xóa</button>
+                            </form>
+                            {% endif %}
+                        </div></td>
+                    </tr>{% else %}<tr><td colspan="4" class="table-empty">Chưa có vai trò.</td></tr>{% endfor %}</tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
 
         <section class="dashboard-panel" id="customers-section" data-dashboard-view="customers">
             <div class="panel-heading"><div><p class="dashboard-eyebrow">CRM</p><h3>Quản lý khách hàng</h3></div><span>{{ customers|length }} khách hàng</span></div>
@@ -257,13 +312,13 @@
             <div class="inventory-layout">
                 <form class="dashboard-form inventory-form" method="post" action="{{ url_for('dashboard.action', action='inbound-create') }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><h4>Tạo phiếu nhập</h4>
-                    <label>Sản phẩm<select name="product_id" required>{% for product in products %}<option value="{{ product.ProductID }}">{{ product.ProductName }} (tồn {{ product.StockQuantity }})</option>{% endfor %}</select></label>
+                    <label>Sản phẩm<select name="product_id" required>{% for product in products %}<option value="{{ product.ProductID }}">{{ product.ProductName }}</option>{% endfor %}</select></label>
                     <label>Nhà cung cấp<select name="supplier_id"><option value="">Không chọn</option>{% for supplier in suppliers %}<option value="{{ supplier.SupplierID }}">{{ supplier.SupplierName }}</option>{% endfor %}</select></label>
                     <div class="form-row"><label>Số lượng<input type="number" name="quantity" min="1" required></label><label>Giá nhập/đơn vị<input type="number" name="import_price" min="0" step="0.01" required></label></div>
-                    <label>Serial (mỗi mã một dòng; bắt buộc với sản phẩm quản lý serial)<textarea name="serial_numbers" rows="3"></textarea></label>
+                    <label>Serial<textarea name="serial_numbers" rows="4" placeholder="Mỗi mã serial một dòng. Nếu bật Quản lý serial, số mã phải khớp số lượng nhập. Mã không trùng, tối đa 100 ký tự. Ví dụ (SL 2):&#10;SN-001&#10;SN-002"></textarea></label>
                     <label>Ghi chú<textarea name="notes" rows="2"></textarea></label><button type="submit">Tạo phiếu nhập</button>
                 </form>
-                <div class="inventory-history"><div><h4>Phiếu nhập gần đây</h4><div class="dashboard-table-wrap"><table class="dashboard-table"><thead><tr><th>Mã phiếu</th><th>Ngày</th><th>Nhà cung cấp</th><th>Tổng tiền</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>{% for note in inbound_notes %}<tr><td>#{{ note.InboundID }}</td><td>{{ note.ImportDate.strftime("%d/%m/%Y %H:%M") if note.ImportDate else "—" }}</td><td>{{ note.SupplierName or "—" }}</td><td>{{ "{:,.0f}".format(note.TotalAmount) }} ₫</td><td>{{ transaction_status_labels.get(note.Status or "COMPLETED", "Không xác định") }}</td><td><div class="transaction-actions"><details><summary class="action-button action-button-edit">Sửa</summary><form class="transaction-edit-form" method="post" action="{{ url_for('dashboard.action', action='inbound-update') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ note.InboundID }}"><label>Nhà cung cấp<select name="supplier_id"><option value="">Không chọn</option>{% for supplier in suppliers %}<option value="{{ supplier.SupplierID }}" {% if supplier.SupplierID == note.SupplierID %}selected{% endif %}>{{ supplier.SupplierName }}</option>{% endfor %}</select></label><label>Trạng thái<select name="status"><option value="DRAFT" {% if note.Status == "DRAFT" %}selected{% endif %}>Nháp</option><option value="COMPLETED" {% if note.Status == "COMPLETED" %}selected{% endif %}>Hoàn tất</option><option value="CANCELLED" {% if note.Status == "CANCELLED" %}selected{% endif %}>Đã hủy</option></select></label><label>Ghi chú<textarea name="notes" rows="2">{{ note.Notes or "" }}</textarea></label><button class="action-button action-button-save" type="submit">Lưu cập nhật</button></form></details><form method="post" action="{{ url_for('dashboard.action', action='inbound-delete') }}" onsubmit="return confirm('Ẩn phiếu nhập này? Tồn kho sẽ không thay đổi.');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ note.InboundID }}"><button class="action-button action-button-delete" type="submit">Xóa</button></form></div></td></tr>{% else %}<tr><td colspan="6" class="table-empty">Chưa có phiếu nhập.</td></tr>{% endfor %}</tbody></table></div></div></div>
+                <div class="inventory-history"><div><h4>Phiếu nhập gần đây</h4><div class="dashboard-table-wrap"><table class="dashboard-table"><thead><tr><th>Mã phiếu</th><th>Ngày</th><th>Nhà cung cấp</th><th>Tổng tiền</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>{% for note in inbound_notes %}<tr><td>#{{ note.InboundID }}</td><td>{{ note.ImportDate.strftime("%d/%m/%Y %H:%M") if note.ImportDate else "—" }}</td><td>{{ note.SupplierName or "—" }}</td><td>{{ "{:,.0f}".format(note.TotalAmount) }} ₫</td><td>{{ transaction_status_labels.get(note.Status or "COMPLETED", "Không xác định") }}</td><td><div class="transaction-actions"><details><summary class="action-button action-button-edit">Sửa</summary><form class="transaction-edit-form" method="post" action="{{ url_for('dashboard.action', action='inbound-update') }}" onsubmit="return confirm('Đổi trạng thái phiếu có thể làm thay đổi tồn kho. Tiếp tục?');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ note.InboundID }}"><label>Nhà cung cấp<select name="supplier_id"><option value="">Không chọn</option>{% for supplier in suppliers %}<option value="{{ supplier.SupplierID }}" {% if supplier.SupplierID == note.SupplierID %}selected{% endif %}>{{ supplier.SupplierName }}</option>{% endfor %}</select></label><label>Trạng thái<select name="status"><option value="DRAFT" {% if note.Status == "DRAFT" %}selected{% endif %}>Nháp</option><option value="COMPLETED" {% if note.Status == "COMPLETED" %}selected{% endif %}>Hoàn tất</option><option value="CANCELLED" {% if note.Status == "CANCELLED" %}selected{% endif %}>Đã hủy</option></select></label><label>Ghi chú<textarea name="notes" rows="2">{{ note.Notes or "" }}</textarea></label><button class="action-button action-button-save" type="submit">Lưu cập nhật</button></form></details><form method="post" action="{{ url_for('dashboard.action', action='inbound-delete') }}" onsubmit="return confirm('Ẩn phiếu nhập này? Nếu đã hoàn tất, số lượng sẽ được trừ khỏi tồn kho.');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ note.InboundID }}"><button class="action-button action-button-delete" type="submit">Xóa</button></form></div></td></tr>{% else %}<tr><td colspan="6" class="table-empty">Chưa có phiếu nhập.</td></tr>{% endfor %}</tbody></table></div></div></div>
                 <details class="dashboard-create">
                     <summary>Phiếu nhập đã xóa ({{ hidden_inbound_notes|length }})</summary>
                     <div class="dashboard-table-wrap"><table class="dashboard-table">
@@ -271,7 +326,7 @@
                         <tbody>{% for note in hidden_inbound_notes %}<tr>
                             <td>#{{ note.InboundID }}</td><td>{{ note.ImportDate.strftime("%d/%m/%Y %H:%M") if note.ImportDate else "—" }}</td>
                             <td>{{ note.SupplierName or "—" }}</td><td>{{ "{:,.0f}".format(note.TotalAmount) }} ₫</td>
-                            <td><form method="post" action="{{ url_for('dashboard.action', action='inbound-restore') }}" onsubmit="return confirm('Khôi phục phiếu nhập này? Tồn kho sẽ không thay đổi.');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ note.InboundID }}"><button class="action-button action-button-save" type="submit">Khôi phục</button></form></td>
+                            <td><form method="post" action="{{ url_for('dashboard.action', action='inbound-restore') }}" onsubmit="return confirm('Khôi phục phiếu nhập này? Tồn kho sẽ được cộng lại nếu phiếu đã hoàn tất.');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ note.InboundID }}"><button class="action-button action-button-save" type="submit">Khôi phục</button></form></td>
                         </tr>{% else %}<tr><td colspan="5" class="table-empty">Không có phiếu nhập đã xóa.</td></tr>{% endfor %}</tbody>
                     </table></div>
                 </details>
@@ -283,12 +338,12 @@
             <div class="inventory-layout">
                 <form class="dashboard-form inventory-form" method="post" action="{{ url_for('dashboard.action', action='outbound-create') }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><h4>Tạo đơn xuất hàng</h4>
-                    <label>Sản phẩm<select name="product_id" required>{% for product in products %}<option value="{{ product.ProductID }}">{{ product.ProductName }} (tồn {{ product.StockQuantity }})</option>{% endfor %}</select></label>
-                    <label>Khách hàng<select name="customer_id"><option value="">Khách lẻ</option>{% for customer in customers %}<option value="{{ customer.CustomerID }}">{{ customer.FullName }} — {{ customer.Phone }}</option>{% endfor %}</select></label>
+                    <label>Sản phẩm<select name="product_id" required>{% for product in products %}<option value="{{ product.ProductID }}">{{ product.ProductName }}</option>{% endfor %}</select></label>
+                    <label>Khách hàng<select name="customer_id"><option value="">Khách lẻ</option>{% for customer in customers %}<option value="{{ customer.CustomerID }}">{{ customer.FullName }}</option>{% endfor %}</select></label>
                     <div class="form-row"><label>Số lượng<input type="number" name="quantity" min="1" required></label><label>Thanh toán<select name="payment_method" required><option value="CASH">Tiền mặt</option><option value="BANK_TRANSFER">Chuyển khoản</option><option value="CARD">Thẻ</option><option value="MOMO">MoMo</option><option value="VNPAY">VNPay</option></select></label></div>
                     <label>Ghi chú<textarea name="notes" rows="2"></textarea></label><button type="submit">Tạo đơn xuất hàng</button>
                 </form>
-                <div><h4>Đơn xuất gần đây</h4><div class="dashboard-table-wrap"><table class="dashboard-table"><thead><tr><th>Mã đơn</th><th>Ngày</th><th>Khách hàng</th><th>Tổng tiền</th><th>Trạng thái</th><th>Hóa đơn</th><th>Thao tác</th></tr></thead><tbody>{% for order in orders %}<tr><td>{{ order.OrderCode }}</td><td>{{ order.OrderDate.strftime("%d/%m/%Y %H:%M") if order.OrderDate else "—" }}</td><td>{{ order.CustomerName or "Khách lẻ" }}</td><td>{{ "{:,.0f}".format(order.TotalAmount) }} ₫</td><td>{{ transaction_status_labels.get(order.OrderStatus or "PENDING", "Không xác định") }}</td><td><div class="invoice-download-actions"><a class="invoice-download-button invoice-download-excel" href="{{ url_for('dashboard.invoice_excel', order_id=order.OrderID) }}" title="Tải hóa đơn Excel">Excel</a><a class="invoice-download-button invoice-download-pdf" href="{{ url_for('dashboard.invoice_pdf', order_id=order.OrderID) }}" title="Tải hóa đơn PDF">PDF</a></div></td><td><div class="transaction-actions"><details><summary class="action-button action-button-edit">Sửa</summary><form class="transaction-edit-form" method="post" action="{{ url_for('dashboard.action', action='outbound-update') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ order.OrderID }}"><label>Trạng thái<select name="status"><option value="PENDING" {% if order.OrderStatus == "PENDING" %}selected{% endif %}>Chờ xử lý</option><option value="PAID" {% if order.OrderStatus == "PAID" %}selected{% endif %}>Đã thanh toán</option><option value="SHIPPED" {% if order.OrderStatus == "SHIPPED" %}selected{% endif %}>Đã giao hàng</option><option value="COMPLETED" {% if order.OrderStatus == "COMPLETED" %}selected{% endif %}>Hoàn tất</option><option value="CANCELLED" {% if order.OrderStatus == "CANCELLED" %}selected{% endif %}>Đã hủy</option></select></label><label>Ghi chú<textarea name="notes" rows="2">{{ order.Notes or "" }}</textarea></label><button class="action-button action-button-save" type="submit">Lưu cập nhật</button></form></details><form method="post" action="{{ url_for('dashboard.action', action='outbound-delete') }}" onsubmit="return confirm('Ẩn đơn xuất này? Tồn kho và thanh toán sẽ không thay đổi.');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ order.OrderID }}"><button class="action-button action-button-delete" type="submit">Xóa</button></form></div></td></tr>{% else %}<tr><td colspan="7" class="table-empty">Chưa có đơn hàng.</td></tr>{% endfor %}</tbody></table></div></div>
+                <div><h4>Đơn xuất gần đây</h4><div class="dashboard-table-wrap"><table class="dashboard-table"><thead><tr><th>Mã đơn</th><th>Ngày</th><th>Khách hàng</th><th>Tổng tiền</th><th>Trạng thái</th><th>Hóa đơn</th><th>Thao tác</th></tr></thead><tbody>{% for order in orders %}<tr><td>{{ order.OrderCode }}</td><td>{{ order.OrderDate.strftime("%d/%m/%Y %H:%M") if order.OrderDate else "—" }}</td><td>{{ order.CustomerName or "Khách lẻ" }}</td><td>{{ "{:,.0f}".format(order.TotalAmount) }} ₫</td><td>{{ transaction_status_labels.get(order.OrderStatus or "PENDING", "Không xác định") }}</td><td><div class="invoice-download-actions"><a class="invoice-download-button invoice-download-excel" href="{{ url_for('dashboard.invoice_excel', order_id=order.OrderID) }}" title="Tải hóa đơn Excel">Excel</a><a class="invoice-download-button invoice-download-pdf" href="{{ url_for('dashboard.invoice_pdf', order_id=order.OrderID) }}" title="Tải hóa đơn PDF">PDF</a></div></td><td><div class="transaction-actions"><details><summary class="action-button action-button-edit">Sửa</summary><form class="transaction-edit-form" method="post" action="{{ url_for('dashboard.action', action='outbound-update') }}" onsubmit="return confirm('Hủy hoặc mở lại đơn có thể làm thay đổi tồn kho. Tiếp tục?');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ order.OrderID }}"><label>Trạng thái<select name="status"><option value="PENDING" {% if order.OrderStatus == "PENDING" %}selected{% endif %}>Chờ xử lý</option><option value="PAID" {% if order.OrderStatus == "PAID" %}selected{% endif %}>Đã thanh toán</option><option value="SHIPPED" {% if order.OrderStatus == "SHIPPED" %}selected{% endif %}>Đã giao hàng</option><option value="COMPLETED" {% if order.OrderStatus == "COMPLETED" %}selected{% endif %}>Hoàn tất</option><option value="CANCELLED" {% if order.OrderStatus == "CANCELLED" %}selected{% endif %}>Đã hủy</option></select></label><label>Ghi chú<textarea name="notes" rows="2">{{ order.Notes or "" }}</textarea></label><button class="action-button action-button-save" type="submit">Lưu cập nhật</button></form></details><form method="post" action="{{ url_for('dashboard.action', action='outbound-delete') }}" onsubmit="return confirm('Ẩn đơn xuất này? Nếu đơn chưa hủy, hàng sẽ được cộng lại vào tồn kho.');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ order.OrderID }}"><button class="action-button action-button-delete" type="submit">Xóa</button></form></div></td></tr>{% else %}<tr><td colspan="7" class="table-empty">Chưa có đơn hàng.</td></tr>{% endfor %}</tbody></table></div></div>
                 <details class="dashboard-create">
                     <summary>Đơn xuất đã xóa ({{ hidden_orders|length }})</summary>
                     <div class="dashboard-table-wrap"><table class="dashboard-table">
@@ -296,7 +351,7 @@
                         <tbody>{% for order in hidden_orders %}<tr>
                             <td>{{ order.OrderCode }}</td><td>{{ order.OrderDate.strftime("%d/%m/%Y %H:%M") if order.OrderDate else "—" }}</td>
                             <td>{{ order.CustomerName or "Khách lẻ" }}</td><td>{{ "{:,.0f}".format(order.TotalAmount) }} ₫</td>
-                            <td><form method="post" action="{{ url_for('dashboard.action', action='outbound-restore') }}" onsubmit="return confirm('Khôi phục đơn xuất này? Tồn kho và thanh toán sẽ không thay đổi.');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ order.OrderID }}"><button class="action-button action-button-save" type="submit">Khôi phục</button></form></td>
+                            <td><form method="post" action="{{ url_for('dashboard.action', action='outbound-restore') }}" onsubmit="return confirm('Khôi phục đơn xuất này? Tồn kho sẽ bị trừ lại.');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ order.OrderID }}"><button class="action-button action-button-save" type="submit">Khôi phục</button></form></td>
                         </tr>{% else %}<tr><td colspan="5" class="table-empty">Không có đơn xuất đã xóa.</td></tr>{% endfor %}</tbody>
                     </table></div>
                 </details>

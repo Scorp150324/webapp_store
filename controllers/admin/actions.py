@@ -8,6 +8,7 @@ from controllers.admin.customers import handle_action as handle_customer_action
 from controllers.admin.employees import handle_action as handle_employee_action
 from controllers.admin.inventory import handle_action as handle_inventory_action
 from controllers.admin.products import handle_action as handle_product_action
+from controllers.admin.roles import handle_action as handle_role_action
 from database import engine
 
 logger = logging.getLogger(__name__)
@@ -17,6 +18,9 @@ ACTION_HANDLERS = {
     "employee-update": handle_employee_action,
     "employee-delete": handle_employee_action,
     "employee-restore": handle_employee_action,
+    "role-create": handle_role_action,
+    "role-update": handle_role_action,
+    "role-delete": handle_role_action,
     "customer-create": handle_customer_action,
     "customer-update": handle_customer_action,
     "customer-delete": handle_customer_action,
@@ -42,6 +46,8 @@ def action(action):
         abort(404)
     if action.startswith("employee-") and session.get("role_id") != 1:
         abort(403)
+    if action.startswith("role-") and session.get("role_id") != 1:
+        abort(403)
     if action == "customer-restore" and session.get("role_id") != 1:
         abort(403)
 
@@ -62,6 +68,8 @@ def action(action):
         if action.startswith("inbound-")
         else "outbound-section"
         if action.startswith("outbound-")
+        else "roles-section"
+        if action.startswith("role-")
         else f"{action.split('-')[0]}-section"
     )
     return redirect(url_for("dashboard.home") + f"#{section}")

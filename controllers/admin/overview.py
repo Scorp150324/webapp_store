@@ -8,6 +8,14 @@ from database import engine, text
 
 logger = logging.getLogger(__name__)
 
+ROLE_LABELS = {
+    "ADMIN": "Quản trị viên",
+    "SALES": "Nhân viên bán hàng",
+    "WAREHOUSE": "Nhân viên kho",
+    "CASHIER": "Thu ngân",
+    "MANAGER": "Quản lý",
+}
+
 
 def home():
     csrf_token = session.setdefault("dashboard_csrf_token", secrets.token_urlsafe(32))
@@ -32,8 +40,19 @@ def home():
                 )
             ).mappings().one()
             roles = connection.execute(
-                text("SELECT RoleID, RoleName FROM Roles ORDER BY RoleID")
+                text(
+                    "SELECT r.RoleID, r.RoleName, r.Description, COUNT(u.UserID) "
+                    "AS EmployeeCount FROM Roles AS r "
+                    "LEFT JOIN Users AS u ON u.RoleID=r.RoleID "
+                    "GROUP BY r.RoleID, r.RoleName, r.Description ORDER BY r.RoleID"
+                )
             ).mappings().all()
+            role_labels = {
+                role["RoleName"]: ROLE_LABELS.get(
+                    role["RoleName"].strip().upper(), role["RoleName"]
+                )
+                for role in roles
+            }
             employees = connection.execute(
                 text(
                     "SELECT u.UserID, u.Username, u.FullName, u.Email, u.Phone, "
@@ -58,7 +77,7 @@ def home():
                     "SELECT CustomerID, Username, FullName, Phone, Email, "
                     "TotalSpent, RewardPoints "
                     "FROM Customers WHERE IsDeleted = 0 "
-                    "ORDER BY CustomerID DESC LIMIT 100"
+                    "ORDER BY FullName ASC, CustomerID ASC LIMIT 100"
                 )
             ).mappings().all()
             hidden_customers = []
@@ -165,6 +184,7 @@ def home():
         period_label=selected_period["period_label"],
         stats=stats,
         roles=roles,
+        role_labels=role_labels,
         employees=employees,
         hidden_employees=hidden_employees,
         customers=customers,
