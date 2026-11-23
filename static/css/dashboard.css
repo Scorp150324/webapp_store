@@ -570,6 +570,55 @@ body.dashboard-tech-body .dashboard-title .dashboard-eyebrow {
     overflow-x: auto;
 }
 
+.employee-search {
+    display: grid;
+    gap: 0.45rem;
+    margin: 0 0 0.85rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.75rem;
+    background: #f8fafc;
+}
+
+.employee-search > label {
+    color: #334155;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.employee-search-controls {
+    display: flex;
+    gap: 0.55rem;
+}
+
+.employee-search-controls input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid #94a3b8;
+    border-radius: 0.55rem;
+    background: #fff;
+    color: #0f172a;
+}
+
+.employee-search-controls input:focus {
+    border-color: #2563eb;
+    outline: 3px solid rgb(37 99 235 / 18%);
+}
+
+.employee-search-controls button {
+    padding: 0.6rem 1rem;
+    border: 0;
+    border-radius: 0.55rem;
+    background: #1d4ed8;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.employee-search-controls button:hover { background: #1e40af; }
+.employee-search > small { color: #475569; }
+
 .dashboard-table {
     width: 100%;
     border-collapse: collapse;

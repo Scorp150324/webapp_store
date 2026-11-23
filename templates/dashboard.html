@@ -113,11 +113,19 @@
                 </form>
             </details>
             {% endif %}
+            <form class="employee-search" data-employee-search-form role="search">
+                <label for="employee-search-input">Tìm nhân viên theo họ tên, tài khoản, vai trò hoặc liên hệ</label>
+                <div class="employee-search-controls">
+                    <input id="employee-search-input" type="search" placeholder="Nhập tên, tài khoản, vai trò, email hoặc số điện thoại..." autocomplete="off" data-employee-search-input>
+                    <button type="submit">Tìm kiếm</button>
+                </div>
+                <small data-employee-search-count aria-live="polite">{{ employees|length }} nhân viên</small>
+            </form>
             <div class="dashboard-table-wrap">
                 <table class="dashboard-table">
                     <thead><tr><th>Nhân viên</th><th>Tài khoản</th><th>Vai trò</th><th>Liên hệ</th>{% if session.get("role_id") == 1 %}<th>Thao tác</th>{% endif %}</tr></thead>
                     <tbody>{% for employee in employees %}
-                    <tr>
+                    <tr data-employee-search-row data-employee-search="{{ (employee.FullName ~ ' ' ~ employee.Username ~ ' ' ~ (role_labels.get(employee.RoleName, employee.RoleName) if employee.RoleName else 'Chưa phân quyền') ~ ' ' ~ (employee.Email or '') ~ ' ' ~ (employee.Phone or ''))|lower }}">
                         <td>{{ employee.FullName }}</td><td>{{ employee.Username }}</td><td><span class="role-pill">{{ role_labels.get(employee.RoleName, employee.RoleName) if employee.RoleName else "Chưa phân quyền" }}</span></td>
                         <td>{{ employee.Email or "—" }}<small class="cell-sub">{{ employee.Phone or "" }}</small></td>
                         {% if session.get("role_id") == 1 %}
@@ -225,9 +233,17 @@
                     <button type="submit">Thêm khách hàng</button>
                 </form>
             </details>
+            <form class="employee-search" data-customer-search-form role="search">
+                <label for="customer-search-input">Tìm khách hàng theo họ tên hoặc thông tin liên hệ</label>
+                <div class="employee-search-controls">
+                    <input id="customer-search-input" type="search" placeholder="Nhập họ tên, số điện thoại hoặc email..." autocomplete="off" data-customer-search-input>
+                    <button type="submit">Tìm kiếm</button>
+                </div>
+                <small data-customer-search-count aria-live="polite">{{ customers|length }} khách hàng</small>
+            </form>
             <div class="dashboard-table-wrap"><table class="dashboard-table">
                 <thead><tr><th>Khách hàng</th><th>Liên hệ</th><th>Tổng chi tiêu</th><th>Điểm</th><th>Thao tác</th></tr></thead>
-                <tbody>{% for customer in customers %}<tr>
+                <tbody>{% for customer in customers %}<tr data-customer-search-row data-customer-search="{{ (customer.FullName ~ ' ' ~ (customer.Phone or '') ~ ' ' ~ (customer.Email or ''))|lower }}">
                     <td>{{ customer.FullName }}</td><td>{{ customer.Phone }}<small class="cell-sub">{{ customer.Email or "" }}</small></td>
                     <td>{{ "{:,.0f}".format(customer.TotalSpent or 0) }} ₫</td><td>{{ customer.RewardPoints or 0 }}</td>
                     <td class="table-actions"><div class="transaction-actions"><details><summary class="action-button action-button-edit">Sửa</summary><form class="inline-edit-form" method="post" action="{{ url_for('dashboard.action', action='customer-update') }}">
@@ -271,9 +287,17 @@
                     <label class="check-field"><input type="checkbox" name="is_has_serial" value="1" checked> Quản lý serial</label><button type="submit">Tạo sản phẩm</button>
                 </form>
             </details>
+            <form class="employee-search" data-product-search-form role="search">
+                <label for="product-search-input">Tìm sản phẩm theo tên, danh mục hoặc SKU</label>
+                <div class="employee-search-controls">
+                    <input id="product-search-input" type="search" placeholder="Nhập tên sản phẩm, danh mục hoặc SKU..." autocomplete="off" data-product-search-input>
+                    <button type="submit">Tìm kiếm</button>
+                </div>
+                <small data-product-search-count aria-live="polite">{{ products|length }} sản phẩm</small>
+            </form>
             <div class="dashboard-table-wrap"><table class="dashboard-table">
                 <thead><tr><th>Sản phẩm</th><th>Danh mục</th><th>SKU</th><th>Tồn kho</th><th>Giá bán</th><th>Thao tác</th></tr></thead>
-                <tbody>{% for product in products %}<tr>
+                <tbody>{% for product in products %}<tr data-product-search-row data-product-search="{{ (product.ProductName ~ ' ' ~ (product.CategoryName or '') ~ ' ' ~ product.SKU)|lower }}">
                     <td>{{ product.ProductName }}<small class="cell-sub">{{ product.SupplierName or "" }}</small></td><td>{{ product.CategoryName or "—" }}</td><td>{{ product.SKU }}</td><td>{{ product.StockQuantity }}</td><td>{{ "{:,.0f}".format(product.SellingPrice) }} ₫</td>
                     <td class="table-actions"><div class="transaction-actions"><details><summary class="action-button action-button-edit">Sửa</summary><form class="inline-edit-form product-edit-form" method="post" enctype="multipart/form-data" action="{{ url_for('dashboard.action', action='product-update') }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ product.ProductID }}">
@@ -371,4 +395,5 @@
 </div>
 <script defer src="/static/js/dashboard-charts.js"></script>
 <script defer src="/static/js/dashboard-navigation.js"></script>
+<script defer src="/static/js/dashboard-employee-search.js"></script>
 {% endblock %}

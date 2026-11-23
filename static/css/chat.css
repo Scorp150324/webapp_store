@@ -36,6 +36,10 @@
 .chat-preview-notice { margin-bottom: .75rem; padding: .7rem 1rem; border: 1px solid #b6d7ff; border-radius: .6rem; background: #e7f3ff; color: #385898; font-size: .9rem; }
 .messenger-page .chat-heading h2 { color: #1c1e21; }
 .messenger-page .chat-heading p { color: #65676b; }
+.admin-chat-page .chat-heading { padding: 1rem 1.25rem; border: 1px solid #d5dbe5; border-radius: .75rem; background: #fff; box-shadow: 0 2px 10px rgb(15 23 42 / 8%); }
+.admin-chat-page .chat-heading h2 { color: #111827; }
+.admin-chat-page .chat-heading p:not(.chat-eyebrow) { color: #374151; font-weight: 500; }
+.admin-chat-page .chat-heading .chat-eyebrow { color: #0759b8 !important; }
 .messenger-page .chat-eyebrow { color: #1877f2 !important; }
 .messenger-window { border: 1px solid #d8dadf; border-radius: .75rem; background: #fff; box-shadow: 0 2px 12px rgb(0 0 0 / 12%); }
 .messenger-page .chat-contact-bar { min-height: 4.25rem; padding: .7rem 1rem; border-bottom: 1px solid #e4e6eb; background: #fff; }
