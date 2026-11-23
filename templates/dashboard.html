@@ -20,7 +20,7 @@
             <a href="#employees-section">Nhân viên</a>
             {% if session.get("role_id") == 1 %}<a href="#roles-section">Vai trò</a>{% endif %}
             <a href="#customers-section">Khách hàng</a>
-            <a href="{{ url_for('dashboard.chat') }}">Chat khách hàng</a>
+            <a href="{{ url_for('dashboard.chat') }}">Tin nhắn</a>
             <a href="#products-section">Sản phẩm</a>
             <a href="#inbound-section">Nhập kho</a>
             <a href="#outbound-section">Xuất kho</a>
