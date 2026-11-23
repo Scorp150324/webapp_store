@@ -20,9 +20,6 @@
             <nav class="auth-nav">
                 {% if session.get("user_id") %}
                 <span>Xin chào, {{ session.get("full_name") }}</span>
-                {% if session.get("user_type") == "customer" %}
-                <a class="auth-nav-link" href="{{ url_for('customer.chat') }}">Chat hỗ trợ</a>
-                {% endif %}
                 {% if session.get("user_type") == "staff" and session.get("role_id") in [1, 5] %}
                 <a class="auth-nav-link" href="{{ url_for('dashboard.home') }}">Quản lý</a>
                 {% endif %}
@@ -47,6 +44,75 @@
         {% endwith %}
         {% block content %}{% endblock %}
     </main>
+    {% if session.get("user_type") == "customer" and request.endpoint != "customer.chat" %}
+    <a class="customer-chat-float" href="{{ url_for('customer.chat') }}" aria-label="Mở chat hỗ trợ" title="Chat với tư vấn viên" data-chat-float>
+        <span aria-hidden="true">💬</span>
+        <strong>Chat hỗ trợ</strong>
+    </a>
+    <script>
+        (() => {
+            const button = document.querySelector("[data-chat-float]");
+            if (!button) return;
+            const saved = JSON.parse(localStorage.getItem("customer-chat-position") || "null");
+            if (saved && Number.isFinite(saved.left) && Number.isFinite(saved.top)) {
+                button.style.left = `${Math.min(saved.left, window.innerWidth - button.offsetWidth - 12)}px`;
+                button.style.top = `${Math.min(saved.top, window.innerHeight - button.offsetHeight - 12)}px`;
+                button.style.right = "auto";
+                button.style.bottom = "auto";
+            }
+            let dragging = false;
+            let moved = false;
+            let offsetX = 0;
+            let offsetY = 0;
+            button.addEventListener("pointerdown", (event) => {
+                dragging = true;
+                moved = false;
+                offsetX = event.clientX - button.getBoundingClientRect().left;
+                offsetY = event.clientY - button.getBoundingClientRect().top;
+                button.setPointerCapture(event.pointerId);
+                button.classList.add("is-dragging");
+            });
+            button.addEventListener("pointermove", (event) => {
+                if (!dragging) return;
+                moved = true;
+                const left = Math.max(12, Math.min(event.clientX - offsetX, window.innerWidth - button.offsetWidth - 12));
+                const top = Math.max(12, Math.min(event.clientY - offsetY, window.innerHeight - button.offsetHeight - 12));
+                button.style.left = `${left}px`;
+                button.style.top = `${top}px`;
+                button.style.right = "auto";
+                button.style.bottom = "auto";
+            });
+            button.addEventListener("pointerup", () => {
+                if (!dragging) return;
+                dragging = false;
+                button.classList.remove("is-dragging");
+                const rect = button.getBoundingClientRect();
+                localStorage.setItem("customer-chat-position", JSON.stringify({ left: rect.left, top: rect.top }));
+            });
+            button.addEventListener("click", (event) => {
+                if (moved) {
+                    event.preventDefault();
+                    moved = false;
+                }
+            });
+        })();
+    </script>
+    {% endif %}
+    {% if session.get("user_type") == "customer" %}
+    <script>
+        (() => {
+            const presenceUrl = {{ url_for('customer.presence')|tojson }};
+            const updatePresence = () => fetch(presenceUrl, {
+                method: "POST",
+                credentials: "same-origin",
+                cache: "no-store",
+                keepalive: true,
+                headers: { Accept: "application/json" },
+            }).catch(() => {});
+            window.setInterval(updatePresence, 30000);
+        })();
+    </script>
+    {% endif %}
     <script>
         document.querySelectorAll("[data-autohide]").forEach((message) => {
             window.setTimeout(() => message.remove(), Number(message.dataset.autohide));

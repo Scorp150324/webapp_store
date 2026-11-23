@@ -16,6 +16,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from database import (
     engine,
+    ensure_customer_presence_schema,
     insert_id,
     product_search_pattern,
     product_search_subquery,
@@ -347,6 +348,18 @@ def login():
                 session["user_id"] = customer["CustomerID"]
                 session["user_type"] = "customer"
                 session["full_name"] = customer["FullName"]
+                try:
+                    ensure_customer_presence_schema()
+                    with engine.begin() as connection:
+                        connection.execute(
+                            text(
+                                "UPDATE Customers SET IsOnline=1, LastSeenAt=CURRENT_TIMESTAMP "
+                                "WHERE CustomerID=:customer_id AND IsDeleted=0"
+                            ),
+                            {"customer_id": customer["CustomerID"]},
+                        )
+                except SQLAlchemyError:
+                    logger.exception("Không thể cập nhật trạng thái online khách hàng")
                 flash(
                     f"Đăng nhập thành công. Xin chào {customer['FullName']}!",
                     "login-success",
@@ -737,6 +750,19 @@ def register():
 
 @site_bp.route("/logout", methods=["POST"])
 def logout():
+    if session.get("user_type") == "customer" and session.get("user_id"):
+        try:
+            ensure_customer_presence_schema()
+            with engine.begin() as connection:
+                connection.execute(
+                    text(
+                        "UPDATE Customers SET IsOnline=0, LastSeenAt=CURRENT_TIMESTAMP "
+                        "WHERE CustomerID=:customer_id"
+                    ),
+                    {"customer_id": session["user_id"]},
+                )
+        except SQLAlchemyError:
+            logger.exception("Không thể cập nhật trạng thái offline khách hàng")
     session.clear()
     flash("Bạn đã đăng xuất.", "success")
     return redirect(url_for("site.index"))

@@ -49,12 +49,16 @@ the defaults in [`.env.example`](./.env.example).
    python app.py
    ```
 
-7. Open [http://127.0.0.1:5000](http://127.0.0.1:5000). Press `Ctrl+C` in
-   PowerShell to stop it.
+7. Open [http://127.0.0.1:5000](http://127.0.0.1:5000) on the computer running
+   the app. To test from a phone or another device on the same Wi-Fi, find the
+   computer's IPv4 address with `ipconfig`, then open
+   `http://<computer-ipv4>:5000` on that device. Press `Ctrl+C` in PowerShell
+   to stop the app.
 
-The default server address is `127.0.0.1`, so the app is available only on
-your own computer. Set `HOST` in `.env` only if you intentionally need a
-different listening address.
+The development server listens on all network interfaces by default so local
+devices can connect. If Windows Firewall prompts you, allow Python on your
+private network. Set `HOST=127.0.0.1` in `.env` to restrict access to the
+computer itself.
 
 ## Optional: deploy Flask on Vercel with Supabase
 

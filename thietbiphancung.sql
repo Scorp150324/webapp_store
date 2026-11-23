@@ -180,6 +180,9 @@ ALTER TABLE `customers`
   ADD COLUMN `LoginFailedAttempts` int NOT NULL DEFAULT '0',
   ADD COLUMN `LoginLockLevel` int NOT NULL DEFAULT '0',
   ADD COLUMN `LoginLockedUntil` bigint NOT NULL DEFAULT '0';
+ALTER TABLE `customers`
+  ADD COLUMN `IsOnline` tinyint(1) NOT NULL DEFAULT '0',
+  ADD COLUMN `LastSeenAt` datetime DEFAULT NULL;
 
 --
 -- Table structure for table `inbound_details`
@@ -794,10 +797,11 @@ UNLOCK TABLES;
 
 -- ============================================================
 -- Chat tables (MySQL)
-DROP TABLE IF EXISTS `chat_messages`;
-DROP TABLE IF EXISTS `chat_conversations`;
+-- This section can be run independently in phpMyAdmin.
+USE `store_management_db`;
+SET FOREIGN_KEY_CHECKS=0;
 
-CREATE TABLE `chat_conversations` (
+CREATE TABLE IF NOT EXISTS `chat_conversations` (
   `ConversationID` bigint NOT NULL AUTO_INCREMENT,
   `CustomerID` int NOT NULL,
   `LastMessageAt` datetime DEFAULT CURRENT_TIMESTAMP,
@@ -808,7 +812,7 @@ CREATE TABLE `chat_conversations` (
   CONSTRAINT `fk_chat_conversations_customer` FOREIGN KEY (`CustomerID`) REFERENCES `customers` (`CustomerID`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `chat_messages` (
+CREATE TABLE IF NOT EXISTS `chat_messages` (
   `MessageID` bigint NOT NULL AUTO_INCREMENT,
   `ConversationID` bigint NOT NULL,
   `SenderType` varchar(20) NOT NULL,
@@ -823,6 +827,8 @@ CREATE TABLE `chat_messages` (
   CONSTRAINT `fk_chat_messages_user` FOREIGN KEY (`SenderUserID`) REFERENCES `users` (`UserID`) ON DELETE SET NULL,
   CONSTRAINT `fk_chat_messages_customer` FOREIGN KEY (`SenderCustomerID`) REFERENCES `customers` (`CustomerID`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET FOREIGN_KEY_CHECKS=1;
 
 -- Supabase PostgreSQL migration (001_supabase_postgres.sql)
 -- ============================================================
@@ -903,6 +909,8 @@ CREATE TABLE "Customers" (
   "LoginFailedAttempts" INTEGER NOT NULL DEFAULT 0,
   "LoginLockLevel" INTEGER NOT NULL DEFAULT 0,
   "LoginLockedUntil" BIGINT NOT NULL DEFAULT 0,
+  "IsOnline" SMALLINT NOT NULL DEFAULT 0,
+  "LastSeenAt" TIMESTAMP,
   CONSTRAINT fk_customers_group FOREIGN KEY ("GroupID") REFERENCES "Customer_Groups"("GroupID") ON DELETE SET NULL
 );
 

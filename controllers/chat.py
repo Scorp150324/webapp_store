@@ -1,12 +1,28 @@
 import logging
 import secrets
+import hmac
 
 from flask import abort, jsonify, render_template, request, session
+from sqlalchemy.exc import SQLAlchemyError
 
-from database import engine, insert_id, text
+from database import engine, ensure_customer_presence_schema, insert_id, text
 
 logger = logging.getLogger(__name__)
 MAX_MESSAGE_LENGTH = 2000
+
+
+def _bot_reply(message):
+    """Return a short fallback reply while no staff member owns the chat."""
+    normalized = message.casefold()
+    if any(word in normalized for word in ("xin chào", "chào", "hello", "hi")):
+        return "Xin chào! Trợ lý tự động đã nhận được tin nhắn của bạn."
+    if any(word in normalized for word in ("giá", "sản phẩm", "sp", "mã hàng")):
+        return "Bạn có thể xem giá và thông tin sản phẩm ngay trên cửa hàng. Tin nhắn của bạn đã được ghi nhận để admin hỗ trợ thêm khi online."
+    if any(word in normalized for word in ("đơn hàng", "đặt hàng", "mua hàng", "giao hàng")):
+        return "Yêu cầu về đơn hàng đã được ghi nhận. Admin sẽ kiểm tra và phản hồi trong cuộc trò chuyện này khi online."
+    if any(word in normalized for word in ("bảo hành", "bảo hành", "sửa chữa")):
+        return "Yêu cầu bảo hành đã được ghi nhận. Vui lòng giữ lại mã đơn hàng để admin kiểm tra nhanh hơn."
+    return "Mình đã ghi nhận tin nhắn của bạn. Hiện chưa có admin trực tuyến; admin sẽ tiếp tục trao đổi trong cuộc trò chuyện này khi online."
 
 
 def _require_customer():
@@ -22,9 +38,13 @@ def _require_staff():
 
 
 def _check_chat_csrf():
-    expected = session.get("chat_csrf_token") or session.get("dashboard_csrf_token", "")
+    expected = (
+        session.get("dashboard_csrf_token", "")
+        if session.get("user_type") == "staff"
+        else session.get("chat_csrf_token", "")
+    )
     supplied = request.headers.get("X-CSRF-Token") or request.form.get("csrf_token", "")
-    if not expected or supplied != expected:
+    if not expected or not hmac.compare_digest(expected, supplied):
         abort(400, description="Phiên chat hết hạn. Hãy tải lại trang và thử lại.")
 
 
@@ -86,7 +106,13 @@ def _serialize_messages(rows):
         {
             "id": row["MessageID"],
             "sender_type": row["SenderType"],
-            "sender_name": row["SenderName"] or ("Nhân viên" if row["SenderType"] == "STAFF" else "Bạn"),
+            "sender_name": row["SenderName"] or (
+                "Trợ lý tự động"
+                if row["SenderType"] == "BOT"
+                else "Nhân viên"
+                if row["SenderType"] == "STAFF"
+                else "Bạn"
+            ),
             "text": row["MessageText"],
             "created_at": row["CreatedAt"].isoformat() if row["CreatedAt"] else "",
         }
@@ -125,6 +151,22 @@ def customer_messages():
                 {"conversation_id": conversation_id, "customer_id": customer_id, "message": message},
                 "MessageID",
             )
+            staff_message = connection.execute(
+                text(
+                    "SELECT 1 FROM Chat_Messages "
+                    "WHERE ConversationID=:conversation_id AND SenderType='STAFF' LIMIT 1"
+                ),
+                {"conversation_id": conversation_id},
+            ).first()
+            if not staff_message:
+                insert_id(
+                    connection,
+                    "INSERT INTO Chat_Messages "
+                    "(ConversationID, SenderType, MessageText) "
+                    "VALUES (:conversation_id, 'BOT', :message)",
+                    {"conversation_id": conversation_id, "message": _bot_reply(message)},
+                    "MessageID",
+                )
             connection.execute(
                 text(
                     "UPDATE Chat_Conversations SET LastMessageAt=CURRENT_TIMESTAMP "
@@ -142,45 +184,90 @@ def admin_chat():
     _require_staff()
     token = session.setdefault("dashboard_csrf_token", secrets.token_urlsafe(32))
     selected_id = request.args.get("customer_id", type=int)
-    with engine.begin() as connection:
-        customers = connection.execute(
-            text(
-                "SELECT c.CustomerID, c.FullName, c.Phone, "
-                "COALESCE(cc.LastMessageAt, c.CreatedAt) AS LastMessageAt, "
-                "(SELECT COUNT(*) FROM Chat_Messages cm "
-                "WHERE cm.ConversationID=cc.ConversationID AND cm.SenderType='CUSTOMER' AND cm.IsRead=0) AS UnreadCount "
-                "FROM Customers AS c LEFT JOIN Chat_Conversations AS cc ON cc.CustomerID=c.CustomerID "
-                "WHERE c.IsDeleted=0 ORDER BY LastMessageAt DESC, c.FullName ASC"
-            )
-        ).mappings().all()
-        messages = []
-        if selected_id:
-            conversation = connection.execute(
-                text("SELECT ConversationID FROM Chat_Conversations WHERE CustomerID=:customer_id"),
-                {"customer_id": selected_id},
-            ).mappings().first()
-            if conversation:
-                messages = _messages(connection, conversation["ConversationID"], mark_staff_read=True)
+    customers = []
+    messages = []
+    data_unavailable = False
+    try:
+        ensure_customer_presence_schema()
+        with engine.begin() as connection:
+            customers = connection.execute(
+                text(
+                    "SELECT c.CustomerID, c.FullName, c.Phone, "
+                    "CASE WHEN c.IsOnline=1 AND c.LastSeenAt > CURRENT_TIMESTAMP - INTERVAL '3 minutes' "
+                    "THEN 1 ELSE 0 END AS IsOnline, c.LastSeenAt, "
+                    "COALESCE(cc.LastMessageAt, c.CreatedAt) AS LastMessageAt, "
+                    "(SELECT COUNT(*) FROM Chat_Messages cm "
+                    "WHERE cm.ConversationID=cc.ConversationID AND cm.SenderType='CUSTOMER' AND cm.IsRead=0) AS UnreadCount "
+                    "FROM Customers AS c LEFT JOIN Chat_Conversations AS cc ON cc.CustomerID=c.CustomerID "
+                    "WHERE c.IsDeleted=0 ORDER BY LastMessageAt DESC, c.FullName ASC"
+                )
+            ).mappings().all()
+            if selected_id:
+                conversation = connection.execute(
+                    text("SELECT ConversationID FROM Chat_Conversations WHERE CustomerID=:customer_id"),
+                    {"customer_id": selected_id},
+                ).mappings().first()
+                if conversation:
+                    messages = _messages(connection, conversation["ConversationID"], mark_staff_read=True)
+    except SQLAlchemyError:
+        logger.exception("Không thể tải dữ liệu chat admin; hiển thị giao diện rỗng")
+        data_unavailable = True
+        selected_id = None
     return render_template(
         "admin_chat.html",
         csrf_token=token,
         customers=customers,
         selected_customer_id=selected_id,
         messages=_serialize_messages(messages),
+        data_unavailable=data_unavailable,
     )
 
 
 def admin_messages(customer_id):
     _require_staff()
+    ensure_customer_presence_schema()
     with engine.begin() as connection:
+        connection.execute(
+            text(
+                "UPDATE Customers SET IsOnline=0 WHERE CustomerID=:customer_id "
+                "AND IsOnline=1 AND LastSeenAt <= CURRENT_TIMESTAMP - INTERVAL '3 minutes'"
+            ),
+            {"customer_id": customer_id},
+        )
+        customer = connection.execute(
+            text(
+                "SELECT IsOnline FROM Customers "
+                "WHERE CustomerID=:customer_id AND IsDeleted=0"
+            ),
+            {"customer_id": customer_id},
+        ).mappings().first()
+        if not customer:
+            abort(404)
         conversation = connection.execute(
             text("SELECT ConversationID FROM Chat_Conversations WHERE CustomerID=:customer_id"),
             {"customer_id": customer_id},
         ).mappings().first()
         if not conversation:
-            return jsonify(messages=[])
+            return jsonify(messages=[], customer_online=bool(customer["IsOnline"]))
         messages = _messages(connection, conversation["ConversationID"], mark_staff_read=True)
-    return jsonify(messages=_serialize_messages(messages))
+    return jsonify(
+        messages=_serialize_messages(messages),
+        customer_online=bool(customer["IsOnline"]),
+    )
+
+
+def customer_presence():
+    customer_id = _require_customer()
+    ensure_customer_presence_schema()
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "UPDATE Customers SET IsOnline=1, LastSeenAt=CURRENT_TIMESTAMP "
+                "WHERE CustomerID=:customer_id AND IsDeleted=0"
+            ),
+            {"customer_id": customer_id},
+        )
+    return jsonify(ok=True)
 
 
 def admin_send_message(customer_id):

@@ -44,6 +44,6 @@ def form_decimal(name, *, minimum=Decimal("0")):
 
 def check_csrf_token():
     expected = session.get("dashboard_csrf_token", "")
-    supplied = request.form.get("csrf_token", "")
+    supplied = request.headers.get("X-CSRF-Token") or request.form.get("csrf_token", "")
     if not expected or not hmac.compare_digest(expected, supplied):
         abort(400, description="Phiên biểu mẫu hết hạn. Hãy tải lại trang và thử lại.")

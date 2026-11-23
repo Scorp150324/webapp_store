@@ -1,8 +1,9 @@
 import os
 import re
+from threading import Lock
 
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, text as sqlalchemy_text
+from sqlalchemy import create_engine, inspect, text as sqlalchemy_text
 from sqlalchemy.engine import URL, make_url
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -143,6 +144,41 @@ engine = create_engine(
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+_customer_presence_schema_checked = False
+_customer_presence_schema_lock = Lock()
+
+
+def ensure_customer_presence_schema():
+    """Add presence columns to an existing MySQL/PostgreSQL customer table once."""
+    global _customer_presence_schema_checked
+    if _customer_presence_schema_checked:
+        return
+
+    with _customer_presence_schema_lock:
+        if _customer_presence_schema_checked:
+            return
+        table_name = "customers" if engine.dialect.name == "mysql" else "Customers"
+        with engine.begin() as connection:
+            existing = {
+                column["name"].lower()
+                for column in inspect(connection).get_columns(table_name)
+            }
+            if engine.dialect.name == "mysql":
+                additions = {
+                    "isonline": "ALTER TABLE customers ADD COLUMN IsOnline TINYINT(1) NOT NULL DEFAULT 0",
+                    "lastseenat": "ALTER TABLE customers ADD COLUMN LastSeenAt DATETIME NULL",
+                }
+            else:
+                additions = {
+                    "isonline": 'ALTER TABLE "Customers" ADD COLUMN "IsOnline" SMALLINT NOT NULL DEFAULT 0',
+                    "lastseenat": 'ALTER TABLE "Customers" ADD COLUMN "LastSeenAt" TIMESTAMP NULL',
+                }
+            for column_name, statement in additions.items():
+                if column_name not in existing:
+                    connection.exec_driver_sql(statement)
+
+        _customer_presence_schema_checked = True
 
 def get_db():
     db = SessionLocal()

@@ -1,12 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="chat-page admin-chat-page" data-admin-chat data-chat-url="{{ url_for('dashboard.chat_messages', customer_id=selected_customer_id or 0) }}" data-csrf-token="{{ csrf_token }}">
+<section class="chat-page messenger-page admin-chat-page" data-admin-chat data-selected-customer-id="{{ selected_customer_id or '' }}" data-chat-url="{{ url_for('dashboard.chat_messages', customer_id=selected_customer_id or 0) }}" data-csrf-token="{{ csrf_token }}">
     <div class="chat-heading"><div><p class="chat-eyebrow">HỖ TRỢ KHÁCH HÀNG</p><h2>Trung tâm chat</h2><p>Chọn khách hàng để xem và trả lời hội thoại.</p></div><a class="chat-back" href="{{ url_for('dashboard.home') }}">Về dashboard</a></div>
+    {% if data_unavailable %}<div class="chat-preview-notice" role="status">Đang xem giao diện chat. Dữ liệu sẽ hiển thị sau khi kết nối cơ sở dữ liệu hoạt động.</div>{% endif %}
     <div class="admin-chat-layout">
-        <aside class="chat-customer-list">
+        <aside class="chat-customer-list messenger-sidebar">
+            <div class="messenger-sidebar-heading"><strong>Đoạn chat</strong><span>⋯</span></div>
+            <label class="messenger-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Tìm kiếm Messenger" data-chat-search aria-label="Tìm khách hàng"></label>
             {% for customer in customers %}
-            <a class="chat-customer {{ 'is-selected' if customer.CustomerID == selected_customer_id else '' }}" href="{{ url_for('dashboard.chat', customer_id=customer.CustomerID) }}">
-                <strong>{{ customer.FullName }}</strong><small>{{ customer.Phone }}{% if customer.UnreadCount %} · <b>{{ customer.UnreadCount }} tin mới</b>{% endif %}</small>
+            <a class="chat-customer {{ 'is-selected' if customer.CustomerID == selected_customer_id else '' }}" href="{{ url_for('dashboard.chat', customer_id=customer.CustomerID) }}" data-customer-name="{{ customer.FullName|lower }}" data-customer-id="{{ customer.CustomerID }}">
+                <span class="chat-customer-avatar" aria-hidden="true">{{ customer.FullName[:2]|upper }}</span>
+                <span class="chat-customer-copy"><strong>{{ customer.FullName }}</strong><small><i class="messenger-online-dot {{ 'is-offline' if not customer.IsOnline else '' }}" data-customer-status-dot aria-hidden="true"></i> <span data-customer-status>{{ 'Online' if customer.IsOnline else 'Offline' }}</span> · {{ customer.Phone }}{% if customer.UnreadCount %} · <b>{{ customer.UnreadCount }} tin mới</b>{% endif %}</small></span>
             </a>
             {% else %}<p class="chat-empty">Chưa có khách hàng.</p>{% endfor %}
         </aside>
@@ -15,11 +19,12 @@
             {% for customer in customers if customer.CustomerID == selected_customer_id %}
             <div class="chat-contact-bar">
                 <span class="chat-contact-avatar" aria-hidden="true">{{ customer.FullName[:2]|upper }}</span>
-                <div><strong>{{ customer.FullName }}</strong><small>{{ customer.Phone or 'Chưa có số điện thoại' }} · Đang trao đổi</small></div>
+                <div data-selected-customer-status><strong>{{ customer.FullName }}</strong><small><i class="messenger-online-dot {{ 'is-offline' if not customer.IsOnline else '' }}" data-customer-status-dot aria-hidden="true"></i> <span data-customer-status>{{ 'Online' if customer.IsOnline else 'Offline' }}</span> · {{ customer.Phone or 'Chưa có số điện thoại' }}</small></div>
+                <div class="messenger-actions" aria-label="Tùy chọn cuộc trò chuyện"><span>☎</span><span>ⓘ</span></div>
             </div>
             {% endfor %}
             <div class="chat-messages" data-chat-messages aria-live="polite">
-                {% for message in messages %}<article class="chat-message {{ 'chat-message-me' if message.sender_type == 'STAFF' else '' }}"><small>{{ message.sender_name }} · {{ message.created_at|replace('T', ' ')|truncate(16, True, '') }}</small><p>{{ message.text }}</p></article>{% else %}<p class="chat-empty">Chưa có tin nhắn.</p>{% endfor %}
+                {% for message in messages %}<article class="chat-message {{ 'chat-message-staff' if message.sender_type == 'STAFF' else 'chat-message-customer' if message.sender_type == 'CUSTOMER' else 'chat-message-bot' if message.sender_type == 'BOT' else '' }}"><small>{{ message.sender_name }} · {{ message.created_at|replace('T', ' ')|truncate(16, True, '') }}</small><p>{{ message.text }}</p></article>{% else %}<p class="chat-empty">Chưa có tin nhắn.</p>{% endfor %}
             </div>
             <form class="chat-form" data-chat-form><textarea name="message" maxlength="2000" rows="2" placeholder="Trả lời khách hàng..." required></textarea><button type="submit">Gửi</button></form>
             <p class="chat-error" data-chat-error role="alert"></p>
@@ -27,5 +32,5 @@
         </div>
     </div>
 </section>
-{% if selected_customer_id %}<script src="/static/js/chat.js"></script>{% endif %}
+<script src="/static/js/chat.js"></script>
 {% endblock %}

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="chat-page" data-chat data-chat-url="{{ url_for('customer.chat_messages') }}" data-csrf-token="{{ csrf_token }}">
+<section class="chat-page messenger-page" data-chat data-chat-url="{{ url_for('customer.chat_messages') }}" data-csrf-token="{{ csrf_token }}">
     <div class="chat-heading">
         <div>
             <p class="chat-eyebrow">PHÚC THỊNH ICT · HỖ TRỢ KHÁCH HÀNG</p>
@@ -9,14 +9,15 @@
         </div>
         <span class="chat-status"><i aria-hidden="true"></i> Đang trực tuyến</span>
     </div>
-    <div class="chat-window">
+    <div class="chat-window messenger-window">
         <div class="chat-contact-bar">
             <span class="chat-contact-avatar" aria-hidden="true">PT</span>
-            <div><strong>Phúc Thịnh ICT</strong><small>Tư vấn viên sẽ phản hồi trong thời gian sớm nhất.</small></div>
+            <div><strong>Phúc Thịnh ICT</strong><small><i class="messenger-online-dot" aria-hidden="true"></i> Đang hoạt động · Tư vấn hỗ trợ</small></div>
+            <div class="messenger-actions" aria-label="Tùy chọn cuộc trò chuyện"><span>☎</span><span>ⓘ</span></div>
         </div>
         <div class="chat-messages" data-chat-messages aria-live="polite">
             {% for message in messages %}
-            <article class="chat-message {{ 'chat-message-me' if message.sender_type == 'CUSTOMER' else '' }}">
+            <article class="chat-message {{ 'chat-message-me' if message.sender_type == 'CUSTOMER' else 'chat-message-bot' if message.sender_type == 'BOT' else '' }}">
                 <small>{{ message.sender_name }} · {{ message.created_at|replace('T', ' ')|truncate(16, True, '') }}</small><p>{{ message.text }}</p>
             </article>
             {% else %}<p class="chat-empty">Hãy gửi tin nhắn đầu tiên để bắt đầu cuộc trò chuyện.</p>{% endfor %}
