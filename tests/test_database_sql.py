@@ -155,6 +155,20 @@ class DatabaseSqlAdaptationTests(unittest.TestCase):
         self.assertIn("DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 HOUR)", adapted)
         self.assertIn("DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 10 MINUTE)", adapted)
 
+    def test_mysql_normalizes_table_names_for_case_sensitive_hosts(self):
+        statement = (
+            "SELECT c.CustomerID FROM Customers AS c "
+            "LEFT JOIN Chat_Conversations AS cc ON cc.CustomerID=c.CustomerID "
+            "WHERE EXISTS (SELECT 1 FROM Chat_Messages cm)"
+        )
+
+        adapted = _adapt_statement(statement, "mysql")
+
+        self.assertIn("FROM customers AS c", adapted)
+        self.assertIn("LEFT JOIN chat_conversations AS cc", adapted)
+        self.assertIn("FROM chat_messages cm", adapted)
+        self.assertIn("c.CustomerID", adapted)
+
     def test_postgresql_keeps_returning_dialect_unchanged(self):
         statement = 'SELECT ProductID FROM Products WHERE ProductName ILIKE :search'
 
@@ -165,7 +179,7 @@ class DatabaseSqlAdaptationTests(unittest.TestCase):
 
     def test_insert_id_uses_one_insert_for_each_dialect(self):
         for dialect, expected_sql in (
-            ("mysql", "INSERT INTO Products VALUES (:name)"),
+            ("mysql", "INSERT INTO products VALUES (:name)"),
             ("postgresql", 'INSERT INTO "Products" VALUES (:name) RETURNING "ProductID"'),
         ):
             with self.subTest(dialect=dialect):
@@ -248,7 +262,7 @@ class InventoryTransactionTests(unittest.TestCase):
         ):
             handle_action(connection, "inbound-update")
 
-        self.assertIn("UPDATE Inbound_Notes SET SupplierID", connection.statements[1])
+        self.assertIn("UPDATE inbound_notes SET SupplierID", connection.statements[1])
         self.assertEqual(
             connection.parameters[1],
             {
@@ -317,7 +331,7 @@ class AccountRestoreTests(unittest.TestCase):
             handle_employee_action(connection, "employee-restore")
 
         self.assertIn(
-            "UPDATE Users SET IsDeleted=0, DeletedAt=NULL",
+            "UPDATE users SET IsDeleted=0, DeletedAt=NULL",
             connection.statements[0],
         )
         self.assertEqual(connection.parameters[0], {"id": 12})
@@ -332,7 +346,7 @@ class AccountRestoreTests(unittest.TestCase):
             handle_customer_action(connection, "customer-restore")
 
         self.assertIn(
-            "UPDATE Customers SET IsDeleted=0, DeletedAt=NULL",
+            "UPDATE customers SET IsDeleted=0, DeletedAt=NULL",
             connection.statements[0],
         )
         self.assertEqual(connection.parameters[0], {"id": 27})

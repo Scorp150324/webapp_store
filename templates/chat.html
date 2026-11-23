@@ -2,10 +2,18 @@
 {% block content %}
 <section class="chat-page" data-chat data-chat-url="{{ url_for('customer.chat_messages') }}" data-csrf-token="{{ csrf_token }}">
     <div class="chat-heading">
-        <div><p class="chat-eyebrow">PHÚC THỊNH ICT</p><h2>Chat với tư vấn viên</h2><p>Đặt câu hỏi về sản phẩm, đơn hàng hoặc bảo hành.</p></div>
-        <span class="chat-status">● Đang trực tuyến</span>
+        <div>
+            <p class="chat-eyebrow">PHÚC THỊNH ICT · HỖ TRỢ KHÁCH HÀNG</p>
+            <h2>Trao đổi với tư vấn viên</h2>
+            <p>Đặt câu hỏi về sản phẩm, đơn hàng hoặc bảo hành.</p>
+        </div>
+        <span class="chat-status"><i aria-hidden="true"></i> Đang trực tuyến</span>
     </div>
     <div class="chat-window">
+        <div class="chat-contact-bar">
+            <span class="chat-contact-avatar" aria-hidden="true">PT</span>
+            <div><strong>Phúc Thịnh ICT</strong><small>Tư vấn viên sẽ phản hồi trong thời gian sớm nhất.</small></div>
+        </div>
         <div class="chat-messages" data-chat-messages aria-live="polite">
             {% for message in messages %}
             <article class="chat-message {{ 'chat-message-me' if message.sender_type == 'CUSTOMER' else '' }}">

@@ -44,10 +44,9 @@
         const message = textarea.value.trim();
         if (!message) return;
         errorBox.textContent = "";
-        const sendUrl = isAdmin ? url : url;
         try {
-            const response = await fetch(sendUrl, { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf }, body: JSON.stringify({ message }) });
-            const payload = await response.json();
+            const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf }, body: JSON.stringify({ message }) });
+            const payload = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(payload.error?.message || "Không thể gửi tin nhắn.");
             textarea.value = "";
             render(payload.messages || []);

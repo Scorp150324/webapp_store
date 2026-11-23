@@ -12,6 +12,12 @@
         </aside>
         <div class="chat-window" data-admin-window {% if not selected_customer_id %}data-no-customer{% endif %}>
             {% if selected_customer_id %}
+            {% for customer in customers if customer.CustomerID == selected_customer_id %}
+            <div class="chat-contact-bar">
+                <span class="chat-contact-avatar" aria-hidden="true">{{ customer.FullName[:2]|upper }}</span>
+                <div><strong>{{ customer.FullName }}</strong><small>{{ customer.Phone or 'Chưa có số điện thoại' }} · Đang trao đổi</small></div>
+            </div>
+            {% endfor %}
             <div class="chat-messages" data-chat-messages aria-live="polite">
                 {% for message in messages %}<article class="chat-message {{ 'chat-message-me' if message.sender_type == 'STAFF' else '' }}"><small>{{ message.sender_name }} · {{ message.created_at|replace('T', ' ')|truncate(16, True, '') }}</small><p>{{ message.text }}</p></article>{% else %}<p class="chat-empty">Chưa có tin nhắn.</p>{% endfor %}
             </div>

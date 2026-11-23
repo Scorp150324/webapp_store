@@ -22,7 +22,7 @@ def _require_staff():
 
 
 def _check_chat_csrf():
-    expected = session.get("chat_csrf_token", "")
+    expected = session.get("chat_csrf_token") or session.get("dashboard_csrf_token", "")
     supplied = request.headers.get("X-CSRF-Token") or request.form.get("csrf_token", "")
     if not expected or supplied != expected:
         abort(400, description="Phiên chat hết hạn. Hãy tải lại trang và thử lại.")

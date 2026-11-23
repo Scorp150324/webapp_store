@@ -12,6 +12,10 @@ _IDENTIFIER_TOKEN = re.compile(
     r"'(?:''|[^'])*'|--[^\r\n]*|\"(?:\"\"|[^\"])*\"|"
     r":[A-Za-z_][A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_]*"
 )
+_MYSQL_TABLE_REFERENCE = re.compile(
+    r"\b(FROM|JOIN|UPDATE|INTO)\s+([A-Za-z_][A-Za-z0-9_]*)",
+    flags=re.IGNORECASE,
+)
 
 
 def _quote_legacy_identifiers(statement):
@@ -34,6 +38,12 @@ def _quote_legacy_identifiers(statement):
 
 def _adapt_statement(statement, dialect_name):
     if dialect_name == "mysql":
+        # MySQL table-name casing is filesystem-dependent.  The schema dump
+        # uses lowercase table names, so normalize references for Linux hosts
+        # while leaving mixed-case column names unchanged.
+        statement = _MYSQL_TABLE_REFERENCE.sub(
+            lambda match: f"{match.group(1)} {match.group(2).lower()}", statement
+        )
         statement = re.sub(r"\bILIKE\b", "LIKE", statement, flags=re.IGNORECASE)
 
         def replace_interval(match):
