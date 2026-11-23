@@ -9,16 +9,20 @@
     <link rel="stylesheet" href="/static/css/auth.css">
     <link rel="stylesheet" href="/static/css/catalog.css">
     <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/chat.css">
     {% block styles %}{% endblock %}
 </head>
-<body class="bg-gray-50 text-gray-900 font-sans{% if request.endpoint == 'site.index' %} homepage-body{% elif request.endpoint in ['site.login', 'site.register'] %} auth-tech-body{% elif request.endpoint == 'customer.product_detail' %} product-tech-body{% elif request.endpoint == 'dashboard.home' %} dashboard-tech-body{% endif %}">
+<body class="bg-gray-50 text-gray-900 font-sans{% if request.endpoint == 'site.index' %} homepage-body{% elif request.endpoint in ['site.login', 'site.register'] %} auth-tech-body{% elif request.endpoint in ['customer.product_detail', 'customer.chat'] %} product-tech-body{% elif request.endpoint in ['dashboard.home', 'dashboard.chat'] %} dashboard-tech-body{% endif %}">
     {% block site_header %}
-    <header class="{% if request.endpoint in ['site.index', 'site.login', 'site.register', 'customer.product_detail', 'dashboard.home'] %}site-header-tech{% else %}bg-blue-600{% endif %} text-white shadow-md p-4">
+    <header class="{% if request.endpoint in ['site.index', 'site.login', 'site.register', 'customer.product_detail', 'customer.chat', 'dashboard.home', 'dashboard.chat'] %}site-header-tech{% else %}bg-blue-600{% endif %} text-white shadow-md p-4">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold">Sản phẩm công nghệ</h1>
             <nav class="auth-nav">
                 {% if session.get("user_id") %}
                 <span>Xin chào, {{ session.get("full_name") }}</span>
+                {% if session.get("user_type") == "customer" %}
+                <a class="auth-nav-link" href="{{ url_for('customer.chat') }}">Chat hỗ trợ</a>
+                {% endif %}
                 {% if session.get("user_type") == "staff" and session.get("role_id") in [1, 5] %}
                 <a class="auth-nav-link" href="{{ url_for('dashboard.home') }}">Quản lý</a>
                 {% endif %}

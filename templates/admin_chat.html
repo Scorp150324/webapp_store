@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="chat-page admin-chat-page" data-admin-chat data-chat-url="{{ url_for('dashboard.chat_messages', customer_id=selected_customer_id or 0) }}" data-csrf-token="{{ csrf_token }}">
+    <div class="chat-heading"><div><p class="chat-eyebrow">HỖ TRỢ KHÁCH HÀNG</p><h2>Trung tâm chat</h2><p>Chọn khách hàng để xem và trả lời hội thoại.</p></div><a class="chat-back" href="{{ url_for('dashboard.home') }}">Về dashboard</a></div>
+    <div class="admin-chat-layout">
+        <aside class="chat-customer-list">
+            {% for customer in customers %}
+            <a class="chat-customer {{ 'is-selected' if customer.CustomerID == selected_customer_id else '' }}" href="{{ url_for('dashboard.chat', customer_id=customer.CustomerID) }}">
+                <strong>{{ customer.FullName }}</strong><small>{{ customer.Phone }}{% if customer.UnreadCount %} · <b>{{ customer.UnreadCount }} tin mới</b>{% endif %}</small>
+            </a>
+            {% else %}<p class="chat-empty">Chưa có khách hàng.</p>{% endfor %}
+        </aside>
+        <div class="chat-window" data-admin-window {% if not selected_customer_id %}data-no-customer{% endif %}>
+            {% if selected_customer_id %}
+            <div class="chat-messages" data-chat-messages aria-live="polite">
+                {% for message in messages %}<article class="chat-message {{ 'chat-message-me' if message.sender_type == 'STAFF' else '' }}"><small>{{ message.sender_name }} · {{ message.created_at|replace('T', ' ')|truncate(16, True, '') }}</small><p>{{ message.text }}</p></article>{% else %}<p class="chat-empty">Chưa có tin nhắn.</p>{% endfor %}
+            </div>
+            <form class="chat-form" data-chat-form><textarea name="message" maxlength="2000" rows="2" placeholder="Trả lời khách hàng..." required></textarea><button type="submit">Gửi</button></form>
+            <p class="chat-error" data-chat-error role="alert"></p>
+            {% else %}<div class="chat-empty chat-select-prompt">Chọn một khách hàng để bắt đầu.</div>{% endif %}
+        </div>
+    </div>
+</section>
+{% if selected_customer_id %}<script src="/static/js/chat.js"></script>{% endif %}
+{% endblock %}

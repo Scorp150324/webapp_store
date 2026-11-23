@@ -1,0 +1,25 @@
+.chat-page { max-width: 76rem; margin: 0 auto; color: #e2e8f0; }
+.chat-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+.chat-heading h2 { margin: .2rem 0; color: #fff; font-size: 1.8rem; }
+.chat-heading p { margin: 0; color: #bfdbfe; }
+.chat-eyebrow { color: #67e8f9 !important; font-size: .72rem; font-weight: 800; letter-spacing: .12em; }
+.chat-status { color: #86efac; white-space: nowrap; }
+.chat-window { overflow: hidden; border: 1px solid rgb(147 197 253 / 25%); border-radius: 1rem; background: rgb(8 26 56 / 85%); box-shadow: 0 20px 45px rgb(2 12 35 / 30%); }
+.chat-messages { display: flex; min-height: 28rem; max-height: 60vh; flex-direction: column; gap: .8rem; overflow-y: auto; padding: 1.2rem; }
+.chat-message { align-self: flex-start; max-width: min(75%, 42rem); padding: .7rem .9rem; border: 1px solid rgb(147 197 253 / 20%); border-radius: .9rem .9rem .9rem .2rem; background: rgb(30 64 175 / 35%); }
+.chat-message-me { align-self: flex-end; border-radius: .9rem .9rem .2rem .9rem; background: #2563eb; }
+.chat-message small { color: #bfdbfe; font-size: .7rem; }
+.chat-message p { margin: .25rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; color: #fff; }
+.chat-form { display: flex; gap: .75rem; padding: 1rem; border-top: 1px solid rgb(147 197 253 / 20%); }
+.chat-form textarea { flex: 1; resize: vertical; border: 1px solid #64748b; border-radius: .6rem; padding: .7rem; background: #102b5c; color: #fff; }
+.chat-form button, .chat-back { border: 0; border-radius: .6rem; padding: .65rem 1rem; background: #06b6d4; color: #06223d; font-weight: 800; text-decoration: none; cursor: pointer; }
+.chat-error { min-height: 1.25rem; margin: 0; padding: 0 1rem .7rem; color: #fda4af; }
+.chat-empty { margin: auto; color: #93c5fd; text-align: center; }
+.admin-chat-layout { display: grid; grid-template-columns: 18rem minmax(0, 1fr); gap: 1rem; }
+.chat-customer-list { display: grid; align-content: start; gap: .4rem; padding: .65rem; border: 1px solid rgb(147 197 253 / 25%); border-radius: 1rem; background: rgb(8 26 56 / 85%); }
+.chat-customer { display: grid; gap: .25rem; padding: .8rem; border-radius: .65rem; color: #dbeafe; text-decoration: none; }
+.chat-customer:hover, .chat-customer.is-selected { background: #1d4ed8; }
+.chat-customer small { color: #bfdbfe; }
+.chat-customer b { color: #fde68a; }
+.chat-select-prompt { min-height: 32rem; display: grid; place-items: center; }
+@media (max-width: 700px) { .admin-chat-layout { grid-template-columns: 1fr; } .chat-customer-list { max-height: 14rem; overflow-y: auto; } .chat-message { max-width: 90%; } .chat-heading { align-items: flex-start; flex-direction: column; } }
