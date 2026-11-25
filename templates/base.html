@@ -12,9 +12,9 @@
     <link rel="stylesheet" href="/static/css/chat.css">
     {% block styles %}{% endblock %}
 </head>
-<body class="bg-gray-50 text-gray-900 font-sans{% if request.endpoint == 'site.index' %} homepage-body{% elif request.endpoint in ['site.login', 'site.register'] %} auth-tech-body{% elif request.endpoint in ['customer.product_detail', 'customer.chat'] %} product-tech-body{% elif request.endpoint in ['dashboard.home', 'dashboard.chat'] %} dashboard-tech-body{% endif %}">
+<body class="bg-gray-50 text-gray-900 font-sans{% if request.endpoint == 'site.index' %} homepage-body{% elif request.endpoint in ['site.login', 'site.register'] %} auth-tech-body{% elif request.endpoint == 'customer.product_detail' %} product-tech-body{% elif request.endpoint == 'dashboard.home' %} dashboard-tech-body{% endif %}">
     {% block site_header %}
-    <header class="{% if request.endpoint in ['site.index', 'site.login', 'site.register', 'customer.product_detail', 'customer.chat', 'dashboard.home', 'dashboard.chat'] %}site-header-tech{% else %}bg-blue-600{% endif %} text-white shadow-md p-4">
+    <header class="{% if request.endpoint in ['site.index', 'site.login', 'site.register', 'customer.product_detail', 'dashboard.home'] %}site-header-tech{% else %}bg-blue-600{% endif %} text-white shadow-md p-4">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold">Sản phẩm công nghệ</h1>
             <nav class="auth-nav">
@@ -44,10 +44,11 @@
         {% endwith %}
         {% block content %}{% endblock %}
     </main>
-    {% if session.get("user_type") == "customer" and request.endpoint != "customer.chat" %}
-    <a class="customer-chat-float" href="{{ url_for('customer.chat') }}" aria-label="Mở chat hỗ trợ" title="Chat với tư vấn viên" data-chat-float>
-        <span aria-hidden="true">💬</span>
-        <strong>Chat hỗ trợ</strong>
+    {% if session.get("user_type") == "customer" or request.endpoint == "site.index" %}
+    <a class="customer-chat-float" href="{{ config.ZALO_URL }}" target="_blank" rel="noopener noreferrer" aria-label="Mở Zalo hỗ trợ" title="Trao đổi qua Zalo" data-chat-float>
+        <span aria-hidden="true">
+            <img src="/image/zalo.png" alt="">
+        </span>
     </a>
     <script>
         (() => {
@@ -95,21 +96,6 @@
                     moved = false;
                 }
             });
-        })();
-    </script>
-    {% endif %}
-    {% if session.get("user_type") == "customer" %}
-    <script>
-        (() => {
-            const presenceUrl = {{ url_for('customer.presence')|tojson }};
-            const updatePresence = () => fetch(presenceUrl, {
-                method: "POST",
-                credentials: "same-origin",
-                cache: "no-store",
-                keepalive: true,
-                headers: { Accept: "application/json" },
-            }).catch(() => {});
-            window.setInterval(updatePresence, 30000);
         })();
     </script>
     {% endif %}

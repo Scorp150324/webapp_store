@@ -23,25 +23,12 @@ from controllers.admin.statistics_export import (
     export_statistics_excel,
     export_statistics_pdf,
 )
-from controllers.chat import admin_chat, admin_messages, admin_send_message
 
 dashboard_bp.add_url_rule("/dashboard", endpoint="home", view_func=home)
 dashboard_bp.add_url_rule(
     "/dashboard/analytics",
     endpoint="analytics_data",
     view_func=analytics_data,
-)
-dashboard_bp.add_url_rule("/dashboard/chat", endpoint="chat", view_func=admin_chat)
-dashboard_bp.add_url_rule(
-    "/dashboard/chat/<int:customer_id>/messages",
-    endpoint="chat_messages",
-    view_func=admin_messages,
-)
-dashboard_bp.add_url_rule(
-    "/dashboard/chat/<int:customer_id>/messages",
-    endpoint="chat_send_message",
-    view_func=admin_send_message,
-    methods=["POST"],
 )
 dashboard_bp.add_url_rule(
     "/dashboard/action/<action>",

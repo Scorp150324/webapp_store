@@ -35,6 +35,9 @@ def create_app():
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["SESSION_COOKIE_SECURE"] = is_production
     app.config["IMAGE_FOLDER"] = str(PROJECT_ROOT / "image")
+    # The support button opens the store's Zalo conversation instead of the
+    # legacy in-app chat. Configure this with the store's direct Zalo URL.
+    app.config["ZALO_URL"] = os.environ.get("ZALO_URL", "https://zalo.me/0899756805")
 
     if not os.environ.get("VERCEL"):
 

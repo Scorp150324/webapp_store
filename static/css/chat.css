@@ -77,9 +77,10 @@
 .chat-customer-copy strong, .chat-customer-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .messenger-sidebar .chat-customer small { color: #65676b; }
 .messenger-sidebar .chat-customer b { color: #1877f2; }
-.customer-chat-float { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 50; display: inline-flex; align-items: center; gap: .55rem; padding: .75rem 1rem .75rem .75rem; border: 2px solid rgb(255 255 255 / 75%); border-radius: 999px; background: linear-gradient(135deg, #06b6d4, #2563eb); box-shadow: 0 .8rem 2rem rgb(15 23 42 / 35%); color: #fff; font-size: .9rem; text-decoration: none; user-select: none; touch-action: none; cursor: grab; }
-.customer-chat-float span { display: grid; width: 2rem; height: 2rem; place-items: center; border-radius: 999px; background: rgb(255 255 255 / 22%); font-size: 1.15rem; }
-.customer-chat-float:hover { transform: translateY(-2px); box-shadow: 0 1rem 2.2rem rgb(15 23 42 / 42%); }
+.customer-chat-float { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 50; display: inline-flex; width: 3.75rem; height: 3.75rem; align-items: center; justify-content: center; border: 3px solid #fff; border-radius: 1.35rem; background: linear-gradient(145deg, #19b5ff 0%, #0068ff 72%); box-shadow: 0 .65rem 1rem rgb(0 82 190 / 24%), 0 1rem 2rem rgb(15 23 42 / 18%); color: #fff; text-decoration: none; user-select: none; touch-action: none; cursor: grab; transition: transform .18s ease, box-shadow .18s ease; }
+.customer-chat-float span { display: grid; width: 3.05rem; height: 3.05rem; place-items: center; overflow: hidden; border-radius: 1rem; box-shadow: 0 2px 3px rgb(0 70 170 / 18%); }
+.customer-chat-float img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.customer-chat-float:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 .8rem 1.2rem rgb(0 82 190 / 30%), 0 1.2rem 2.2rem rgb(15 23 42 / 22%); }
 .customer-chat-float.is-dragging { cursor: grabbing; transform: scale(1.04); }
-@media (max-width: 500px) { .customer-chat-float { right: .75rem; bottom: .75rem; padding-right: .8rem; } .customer-chat-float strong { display: none; } }
+@media (max-width: 500px) { .customer-chat-float { right: .75rem; bottom: .75rem; width: 3.5rem; height: 3.5rem; border-radius: 1.2rem; } }
 @media (max-width: 700px) { .admin-chat-layout { grid-template-columns: 1fr; } .chat-customer-list { max-height: 18rem; overflow-y: auto; } .chat-message { max-width: 90%; } .chat-heading { align-items: flex-start; flex-direction: column; } .messenger-actions { gap: .6rem; } }
