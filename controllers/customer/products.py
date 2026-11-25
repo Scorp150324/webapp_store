@@ -12,7 +12,9 @@ logger = logging.getLogger(__name__)
 
 def _parse_specifications(specifications):
     rows = []
-    for item in re.split(r",\s*|\r?\n", specifications or ""):
+    # Specifications use semicolons (or line breaks) as separators. Do not
+    # split on commas because commas may be part of a specification value.
+    for item in re.split(r";\s*|\r?\n", specifications or ""):
         item = item.strip()
         if not item:
             continue

@@ -24,7 +24,7 @@ def handle_action(connection, action):
             "category_id": form_int("category_id", minimum=1, optional=True),
             "supplier_id": form_int("supplier_id", minimum=1, optional=True),
             "main_image": form_value("main_image", maximum=500) or None,
-            "specifications": form_value("specifications") or None,
+            "specifications": (form_value("specifications").replace(",", ";") or None),
             "cost_price": form_decimal("cost_price"),
             "selling_price": form_decimal("selling_price"),
             "warranty_months": form_int("warranty_months", minimum=0),

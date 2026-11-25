@@ -45,50 +45,12 @@
                 {% if product.CategoryName %}
                 <span class="product-detail-category">{{ product.CategoryName }}</span>
                 {% endif %}
-                {% if product.StockQuantity|int > 0 %}
-                <span class="product-detail-stock is-available">
-                    <span aria-hidden="true"></span>Còn hàng
-                </span>
-                {% else %}
-                <span class="product-detail-stock is-unavailable">
-                    <span aria-hidden="true"></span>Tạm hết hàng
-                </span>
-                {% endif %}
             </div>
             <h1 id="product-detail-title">{{ product.ProductName }}</h1>
 
             <div class="product-detail-price-card">
                 <span class="product-detail-price-label">Giá bán</span>
                 <p class="product-detail-price">{{ "{:,.0f}".format(product.SellingPrice) }} <span>VNĐ</span></p>
-            </div>
-
-            <div class="product-detail-highlights">
-                <div class="product-detail-highlight">
-                    <span class="product-detail-highlight-icon" aria-hidden="true">✓</span>
-                    <span>
-                        <strong>Kho hàng</strong>
-                        <small>
-                            {% if product.StockQuantity|int > 0 %}
-                            Còn {{ product.StockQuantity }} sản phẩm
-                            {% else %}
-                            Tạm hết hàng
-                            {% endif %}
-                        </small>
-                    </span>
-                </div>
-                <div class="product-detail-highlight">
-                    <span class="product-detail-highlight-icon" aria-hidden="true">↻</span>
-                    <span>
-                        <strong>Bảo hành</strong>
-                        <small>
-                            {% if product.WarrantyMonths|int > 0 %}
-                            {{ product.WarrantyMonths }} tháng
-                            {% else %}
-                            Đang cập nhật
-                            {% endif %}
-                        </small>
-                    </span>
-                </div>
             </div>
 
             <section class="product-specifications" aria-label="Thông số kỹ thuật">
