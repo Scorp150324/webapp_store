@@ -131,7 +131,7 @@ def _require_local_mysql():
         raise RuntimeError("Sample data can only be seeded into MySQL.")
     if engine.url.host not in {"localhost", "127.0.0.1", "::1"}:
         raise RuntimeError("Refusing to seed a non-local database.")
-    if os.environ.get("VERCEL") or os.environ.get("FLASK_ENV", "").lower() == "production":
+    if os.environ.get("FLASK_ENV", "").lower() == "production":
         raise RuntimeError("Sample data cannot be seeded in production.")
 
 

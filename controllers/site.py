@@ -45,10 +45,7 @@ def _use_mock_otp_delivery(channel, otp):
         raise RuntimeError("OTP_DELIVERY_MODE must be either 'live' or 'mock'")
     if delivery_mode != "mock":
         return False
-    if (
-        os.environ.get("FLASK_ENV", "").strip().lower() == "production"
-        or os.environ.get("VERCEL")
-    ):
+    if os.environ.get("FLASK_ENV", "").strip().lower() == "production":
         raise RuntimeError("Mock OTP delivery is not allowed in production")
 
     logger.warning(

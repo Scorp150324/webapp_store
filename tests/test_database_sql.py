@@ -169,31 +169,18 @@ class DatabaseSqlAdaptationTests(unittest.TestCase):
         self.assertIn("FROM chat_messages cm", adapted)
         self.assertIn("c.CustomerID", adapted)
 
-    def test_postgresql_keeps_returning_dialect_unchanged(self):
-        statement = 'SELECT ProductID FROM Products WHERE ProductName ILIKE :search'
+    def test_insert_id_uses_mysql_auto_increment(self):
+        connection = FakeConnection()
+        with patch("database.engine", FakeEngine("mysql")):
+            result = insert_id(
+                connection,
+                "INSERT INTO Products VALUES (:name)",
+                {"name": "sample"},
+                "ProductID",
+            )
 
-        self.assertIn(
-            'SELECT "ProductID" FROM "Products" WHERE "ProductName" ILIKE :search',
-            _adapt_statement(statement, "postgresql"),
-        )
-
-    def test_insert_id_uses_one_insert_for_each_dialect(self):
-        for dialect, expected_sql in (
-            ("mysql", "INSERT INTO products VALUES (:name)"),
-            ("postgresql", 'INSERT INTO "Products" VALUES (:name) RETURNING "ProductID"'),
-        ):
-            with self.subTest(dialect=dialect):
-                connection = FakeConnection()
-                with patch("database.engine", FakeEngine(dialect)):
-                    result = insert_id(
-                        connection,
-                        "INSERT INTO Products VALUES (:name)",
-                        {"name": "sample"},
-                        "ProductID",
-                    )
-
-                self.assertEqual(result, 42)
-                self.assertEqual(connection.statements, [expected_sql])
+        self.assertEqual(result, 42)
+        self.assertEqual(connection.statements, ["INSERT INTO products VALUES (:name)"])
 
     def test_mysql_search_uses_prefix_pattern_and_escape(self):
         with patch("database.engine", FakeEngine("mysql")):
@@ -204,15 +191,6 @@ class DatabaseSqlAdaptationTests(unittest.TestCase):
         self.assertIn("Specifications LIKE :search ESCAPE '='", subquery)
         self.assertEqual(subquery.count(" UNION "), 3)
         self.assertEqual(pattern, "Dell=_100=%%")
-
-    def test_postgresql_search_uses_lowercase_prefix_expression(self):
-        with patch("database.engine", FakeEngine("postgresql")):
-            subquery = product_search_subquery()
-            pattern = product_search_pattern("DeLl")
-
-        self.assertIn("lower(ProductName) LIKE :search ESCAPE '='", subquery)
-        self.assertEqual(pattern, "dell%")
-
 
 class InventoryTransactionTests(unittest.TestCase):
     def setUp(self):

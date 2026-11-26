@@ -17,10 +17,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 
 
 def create_app():
-    is_production = (
-        os.environ.get("FLASK_ENV", "").strip().lower() == "production"
-        or bool(os.environ.get("VERCEL"))
-    )
+    is_production = os.environ.get("FLASK_ENV", "").strip().lower() == "production"
     secret_key = os.environ.get("SECRET_KEY")
     if not secret_key and is_production:
         raise RuntimeError("SECRET_KEY must be configured in production")
@@ -39,11 +36,9 @@ def create_app():
     # legacy in-app chat. Configure this with the store's direct Zalo URL.
     app.config["ZALO_URL"] = os.environ.get("ZALO_URL", "https://zalo.me/0899756805")
 
-    if not os.environ.get("VERCEL"):
-
-        @app.get("/static/<path:filename>")
-        def local_static_file(filename):
-            return send_from_directory(PROJECT_ROOT / "static", filename)
+    @app.get("/static/<path:filename>")
+    def local_static_file(filename):
+        return send_from_directory(PROJECT_ROOT / "static", filename)
 
     from api import api_bp
     from controllers.admin import dashboard_bp

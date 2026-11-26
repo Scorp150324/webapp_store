@@ -38,10 +38,6 @@ def handle_action(connection, action):
 
         image = request.files.get("main_image_file")
         if image and image.filename:
-            if os.environ.get("VERCEL"):
-                raise DashboardInputError(
-                    "Không thể lưu ảnh tải lên trên Vercel. Hãy dùng URL ảnh công khai."
-                )
             filename = secure_filename(image.filename)
             extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
             if extension not in ALLOWED_IMAGE_EXTENSIONS:
