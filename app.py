@@ -9,6 +9,7 @@ from flask import Flask, jsonify, render_template, request, send_from_directory
 from sqlalchemy.exc import SQLAlchemyError
 from waitress import serve
 from werkzeug.exceptions import HTTPException
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 load_dotenv()
 
@@ -33,6 +34,12 @@ def create_app():
         template_folder=str(PROJECT_ROOT / "templates"),
         static_folder=None,
     )
+    if os.environ.get("TRUST_PROXY", "").strip().lower() in {"1", "true", "yes", "on"}:
+        # The server panel terminates TLS and forwards the original scheme.
+        # Trust exactly one proxy hop; do not enable this when Flask is public.
+        app.wsgi_app = ProxyFix(
+            app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1
+        )
     app.secret_key = secret_key or secrets.token_hex(32)
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
