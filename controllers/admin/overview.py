@@ -114,7 +114,15 @@ def home():
                 )
             ).mappings().all()
             categories = connection.execute(
-                text("SELECT CategoryID, CategoryName FROM Categories ORDER BY CategoryName")
+                text(
+                    "SELECT c.CategoryID, c.CategoryName, c.ParentID, c.Description, "
+                    "p.CategoryName AS ParentName, COUNT(pr.ProductID) AS ProductCount "
+                    "FROM Categories AS c "
+                    "LEFT JOIN Categories AS p ON p.CategoryID = c.ParentID "
+                    "LEFT JOIN Products AS pr ON pr.CategoryID = c.CategoryID "
+                    "GROUP BY c.CategoryID, c.CategoryName, c.ParentID, "
+                    "c.Description, p.CategoryName ORDER BY c.CategoryName"
+                )
             ).mappings().all()
             suppliers = connection.execute(
                 text("SELECT SupplierID, SupplierName FROM Suppliers ORDER BY SupplierName")

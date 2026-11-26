@@ -394,7 +394,7 @@ class CatalogFilterTests(unittest.TestCase):
 
         connection = CatalogFakeConnection()
         app = Flask(__name__)
-        with app.test_request_context("/?category=pc&page=99"):
+        with app.test_request_context("/?category=10&page=99"):
             with patch(
                 "controllers.site.engine", CatalogFakeEngine(connection)
             ):

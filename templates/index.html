@@ -37,9 +37,9 @@
                 <label for="product-category">Danh mục</label>
                 <select id="product-category" name="category">
                     <option value="">Tất cả danh mục</option>
-                    {% for slug, category in product_categories.items() %}
-                    <option value="{{ slug }}"{% if selected_category == slug %} selected{% endif %}>
-                        {{ category.label }}
+                    {% for category in categories %}
+                    <option value="{{ category.CategoryID }}"{% if selected_category == category.CategoryID|string %} selected{% endif %}>
+                        {{ category.CategoryName }}
                     </option>
                     {% endfor %}
                 </select>

@@ -20,6 +20,7 @@
             <a href="#employees-section">Nhân viên</a>
             {% if session.get("role_id") == 1 %}<a href="#roles-section">Vai trò</a>{% endif %}
             <a href="#customers-section">Khách hàng</a>
+            {% if session.get("role_id") == 1 %}<a href="#categories-section">Danh mục</a>{% endif %}
             <a href="#products-section">Sản phẩm</a>
             <a href="#inbound-section">Nhập kho</a>
             <a href="#outbound-section">Xuất kho</a>
@@ -270,6 +271,38 @@
             </details>
             {% endif %}
         </section>
+
+        {% if session.get("role_id") == 1 %}
+        <section class="dashboard-panel" id="categories-section" data-dashboard-view="categories">
+            <div class="panel-heading"><div><p class="dashboard-eyebrow">DANH MỤC CỬA HÀNG</p><h3>Quản lý danh mục</h3></div><span>{{ categories|length }} danh mục</span></div>
+            <details class="dashboard-create">
+                <summary>+ Thêm danh mục</summary>
+                <form class="dashboard-form dashboard-form-grid" method="post" action="{{ url_for('dashboard.action', action='category-create') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label>Tên danh mục<input name="category_name" maxlength="100" required></label>
+                    <label>Danh mục cha<select name="parent_id"><option value="">Không có</option>{% for category in categories %}<option value="{{ category.CategoryID }}">{{ category.CategoryName }}</option>{% endfor %}</select></label>
+                    <label class="wide-field">Mô tả<input name="description" maxlength="255"></label>
+                    <button type="submit">Thêm danh mục</button>
+                </form>
+            </details>
+            <div class="dashboard-table-wrap"><table class="dashboard-table">
+                <thead><tr><th>Tên danh mục</th><th>Danh mục cha</th><th>Mô tả</th><th>Sản phẩm</th><th>Thao tác</th></tr></thead>
+                <tbody>{% for category in categories %}<tr>
+                    <td>{{ category.CategoryName }}</td><td>{{ category.ParentName or "—" }}</td><td>{{ category.Description or "—" }}</td><td>{{ category.ProductCount or 0 }}</td>
+                    <td class="table-actions"><div class="transaction-actions"><details><summary class="action-button action-button-edit">Sửa</summary>
+                        <form class="inline-edit-form" method="post" action="{{ url_for('dashboard.action', action='category-update') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ category.CategoryID }}">
+                            <label>Tên danh mục<input name="category_name" value="{{ category.CategoryName }}" maxlength="100" required></label>
+                            <label>Danh mục cha<select name="parent_id"><option value="">Không có</option>{% for parent in categories %}{% if parent.CategoryID != category.CategoryID %}<option value="{{ parent.CategoryID }}" {% if parent.CategoryID == category.ParentID %}selected{% endif %}>{{ parent.CategoryName }}</option>{% endif %}{% endfor %}</select></label>
+                            <label class="wide-field">Mô tả<input name="description" value="{{ category.Description or '' }}" maxlength="255"></label>
+                            <button class="action-button action-button-save" type="submit">Lưu thay đổi</button>
+                        </form>
+                    </details>
+                    <form method="post" action="{{ url_for('dashboard.action', action='category-delete') }}" onsubmit="return confirm('Xóa danh mục này? Chỉ danh mục không có sản phẩm hoặc danh mục con mới được xóa.');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ category.CategoryID }}"><button class="action-button action-button-delete" type="submit">Xóa</button></form></div></td>
+                </tr>{% else %}<tr><td colspan="5" class="table-empty">Chưa có danh mục.</td></tr>{% endfor %}</tbody>
+            </table></div>
+        </section>
+        {% endif %}
 
         <section class="dashboard-panel" id="products-section" data-dashboard-view="products">
             <div class="panel-heading"><div><p class="dashboard-eyebrow">DANH MỤC CỬA HÀNG</p><h3>Quản lý sản phẩm</h3></div><span>{{ products|length }} sản phẩm</span></div>

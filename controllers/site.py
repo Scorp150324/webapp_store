@@ -185,15 +185,19 @@ def index():
     page = max(1, request.args.get("page", default=1, type=int) or 1)
     total_pages = 1
     search = request.args.get("q", "").strip()[:100]
-    selected_category = request.args.get("category", "")
-    if selected_category not in PRODUCT_CATEGORIES:
-        selected_category = ""
+    selected_category = request.args.get("category", "").strip()
+    selected_category_id = int(selected_category) if selected_category.isdigit() else None
+    categories = []
 
     try:
         with engine.connect() as connection:
             category_rows = connection.execute(
-                text("SELECT CategoryID, CategoryName, ParentID FROM Categories")
+                text(
+                    "SELECT CategoryID, CategoryName, ParentID "
+                    "FROM Categories ORDER BY CategoryName, CategoryID"
+                )
             ).mappings().all()
+            categories = category_rows
             child_ids_by_parent = {}
             for row in category_rows:
                 if row["ParentID"] is not None:
@@ -202,16 +206,11 @@ def index():
                     )
 
             category_ids = set()
-            if selected_category:
-                root_names = PRODUCT_CATEGORIES[selected_category]["root_names"]
-                root_ids = {
-                    row["CategoryID"]
-                    for row in category_rows
-                    if row["ParentID"] is None
-                    and row["CategoryName"].strip().casefold() in root_names
-                }
-                category_ids.update(root_ids)
-                pending_ids = list(root_ids)
+            if selected_category_id is not None and any(
+                row["CategoryID"] == selected_category_id for row in category_rows
+            ):
+                category_ids.add(selected_category_id)
+                pending_ids = [selected_category_id]
                 while pending_ids:
                     parent_id = pending_ids.pop()
                     for child_id in child_ids_by_parent.get(parent_id, set()):
@@ -298,7 +297,7 @@ def index():
         products_error=products_error,
         search=search,
         selected_category=selected_category,
-        product_categories=PRODUCT_CATEGORIES,
+        categories=categories,
         total_products=total_products,
         page=page,
         total_pages=total_pages,

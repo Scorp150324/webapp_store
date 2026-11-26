@@ -4,6 +4,7 @@ from flask import abort, flash, redirect, session, url_for
 from sqlalchemy.exc import IntegrityError
 
 from controllers.admin.common import DashboardInputError
+from controllers.admin.categories import handle_action as handle_category_action
 from controllers.admin.customers import handle_action as handle_customer_action
 from controllers.admin.employees import handle_action as handle_employee_action
 from controllers.admin.inventory import handle_action as handle_inventory_action
@@ -14,6 +15,9 @@ from database import engine
 logger = logging.getLogger(__name__)
 
 ACTION_HANDLERS = {
+    "category-create": handle_category_action,
+    "category-update": handle_category_action,
+    "category-delete": handle_category_action,
     "employee-create": handle_employee_action,
     "employee-update": handle_employee_action,
     "employee-delete": handle_employee_action,
@@ -48,6 +52,8 @@ def action(action):
         abort(403)
     if action.startswith("role-") and session.get("role_id") != 1:
         abort(403)
+    if action.startswith("category-") and session.get("role_id") != 1:
+        abort(403)
     if action == "customer-restore" and session.get("role_id") != 1:
         abort(403)
 
@@ -70,6 +76,8 @@ def action(action):
         if action.startswith("outbound-")
         else "roles-section"
         if action.startswith("role-")
+        else "categories-section"
+        if action.startswith("category-")
         else f"{action.split('-')[0]}-section"
     )
     return redirect(url_for("dashboard.home") + f"#{section}")

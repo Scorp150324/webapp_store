@@ -18,6 +18,12 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 
 def create_app():
     is_production = os.environ.get("FLASK_ENV", "").strip().lower() == "production"
+    secure_cookie_setting = os.environ.get("SESSION_COOKIE_SECURE")
+    session_cookie_secure = (
+        is_production
+        if secure_cookie_setting is None
+        else secure_cookie_setting.strip().lower() in {"1", "true", "yes", "on"}
+    )
     secret_key = os.environ.get("SECRET_KEY")
     if not secret_key and is_production:
         raise RuntimeError("SECRET_KEY must be configured in production")
@@ -30,7 +36,7 @@ def create_app():
     app.secret_key = secret_key or secrets.token_hex(32)
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-    app.config["SESSION_COOKIE_SECURE"] = is_production
+    app.config["SESSION_COOKIE_SECURE"] = session_cookie_secure
     app.config["IMAGE_FOLDER"] = str(PROJECT_ROOT / "image")
     # The support button opens the store's Zalo conversation instead of the
     # legacy in-app chat. Configure this with the store's direct Zalo URL.
